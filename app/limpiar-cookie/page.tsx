@@ -1,3 +1,5 @@
+'use client'
+
 export default function LimpiarCookiePage() {
   return (
     <main className="min-h-screen bg-black text-white flex items-center justify-center p-4">

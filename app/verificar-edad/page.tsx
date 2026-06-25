@@ -66,11 +66,13 @@ export default function VerificarEdadPage() {
     // Registrar en Supabase
     const supabase = createClient()
     try {
-      const sessionId = typeof crypto !== 'undefined' ? crypto.randomUUID() : `guest-${Date.now()}`
-      await supabase.from('age_verifications').insert({
-        session_id: sessionId,
-        birth_date: birthDate,
-      })
+      if (supabase) {
+        const sessionId = typeof crypto !== 'undefined' ? crypto.randomUUID() : `guest-${Date.now()}`
+        await supabase.from('age_verifications').insert({
+          session_id: sessionId,
+          birth_date: birthDate,
+        })
+      }
     } catch (err) {
       console.error('Error al registrar en Supabase:', err)
       // Continuar aunque Supabase falle
