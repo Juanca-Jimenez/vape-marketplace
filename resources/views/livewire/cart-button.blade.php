@@ -9,10 +9,15 @@
     </svg>
 
     @if ($count > 0)
+        @php
+            $display = $count > 99 ? '99+' : $count;
+            $badgeBg = $count > 99 ? 'bg-red-600' : 'bg-emerald-500';
+        @endphp
+
         <span
-            class="absolute -right-1 -top-1 inline-flex min-h-[1.5rem] min-w-[1.5rem] items-center justify-center rounded-full bg-emerald-500 px-2 text-xs font-semibold text-white shadow-lg shadow-black/30"
+            class="absolute -right-1 -top-1 inline-flex min-h-[1.5rem] min-w-[1.5rem] items-center justify-center rounded-full px-2 text-xs font-semibold text-white shadow-lg shadow-black/30 {{ $badgeBg }}"
         >
-            {{ $count }}
+            {{ $display }}
         </span>
     @endif
 </a>
