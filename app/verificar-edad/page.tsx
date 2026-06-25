@@ -8,6 +8,7 @@ export default function VerificarEdadPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [supabaseStatus, setSupabaseStatus] = useState('')
 
   useEffect(() => {
     if (document.cookie.includes('age_verified=true')) {
@@ -21,6 +22,7 @@ export default function VerificarEdadPage() {
 
     if (!isAdult) {
       setMessage('Lo sentimos, este contenido es exclusivo para mayores de 18 años.')
+      setSupabaseStatus('')
       setIsLoading(false)
       return
     }
@@ -28,12 +30,16 @@ export default function VerificarEdadPage() {
     const supabase = createClient()
     if (supabase) {
       try {
-        await supabase.from('age_verifications').insert({
-          created_at: new Date().toISOString(),
-        })
+        const sessionId = typeof crypto !== 'undefined' ? crypto.randomUUID() : `guest-${Date.now()}`
+        const { error } = await supabase.from('age_verifications').insert({ session_id: sessionId })
+        if (error) throw error
+        setSupabaseStatus('Conexión a Supabase lista.')
       } catch (error) {
         console.error('No se pudo registrar la verificación', error)
+        setSupabaseStatus('La verificación se guardó localmente, pero Supabase no aceptó el registro.')
       }
+    } else {
+      setSupabaseStatus('Supabase no está configurado con una URL válida y una anon key válida.')
     }
 
     router.replace('/tienda')
@@ -68,6 +74,7 @@ export default function VerificarEdadPage() {
         </div>
 
         {message ? <p className="text-sm text-zinc-300">{message}</p> : null}
+        {supabaseStatus ? <p className="text-sm text-zinc-400">{supabaseStatus}</p> : null}
       </div>
     </main>
   )

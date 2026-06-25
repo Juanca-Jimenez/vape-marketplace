@@ -9,8 +9,9 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  const isPublicPath = pathname === '/' || pathname.startsWith('/verificar-edad')
-  const ageVerified = request.cookies.get('age_verified')?.value === 'true'
+  const isPublicPath = pathname === '/verificar-edad'
+  const cookieHeader = request.headers.get('cookie') ?? ''
+  const ageVerified = cookieHeader.includes('age_verified=true') || request.cookies.get('age_verified')?.value === 'true'
 
   if (!isPublicPath && !ageVerified) {
     const url = new URL(AGE_GATE_PATH, request.url)
