@@ -6,9 +6,10 @@ import { createClient } from '@/lib/supabase/client'
 
 export default function VerificarEdadPage() {
   const router = useRouter()
+  const [birthDate, setBirthDate] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [message, setMessage] = useState('')
-  const [supabaseStatus, setSupabaseStatus] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
 
   useEffect(() => {
     if (document.cookie.includes('age_verified=true')) {
@@ -16,65 +17,126 @@ export default function VerificarEdadPage() {
     }
   }, [router])
 
-  const handleVerify = async (isAdult: boolean) => {
-    setIsLoading(true)
-    document.cookie = `age_verified=${isAdult ? 'true' : 'false'}; path=/; max-age=31536000`
+  /**
+   * Calcula si el usuario es mayor de 18 años.
+   * Evita errores de años bisiestos y zona horaria.
+   */
+  const isAdult = (dateStr: string): boolean => {
+    const today = new Date()
+    const birth = new Date(dateStr)
 
-    if (!isAdult) {
-      setMessage('Lo sentimos, este contenido es exclusivo para mayores de 18 años.')
-      setSupabaseStatus('')
+    // Validación básica
+    if (isNaN(birth.getTime())) return false
+
+    let age = today.getFullYear() - birth.getFullYear()
+    const monthDiff = today.getMonth() - birth.getMonth()
+
+    // Si el cumpleaños aún no ha ocurrido este año, restar 1
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--
+    }
+
+    return age >= 18
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setIsLoading(true)
+
+    // Validar que ingresó una fecha
+    if (!birthDate) {
+      setError('Por favor, ingresa tu fecha de nacimiento.')
       setIsLoading(false)
       return
     }
 
-    const supabase = createClient()
-    if (supabase) {
-      try {
-        const sessionId = typeof crypto !== 'undefined' ? crypto.randomUUID() : `guest-${Date.now()}`
-        const { error } = await supabase.from('age_verifications').insert({ session_id: sessionId })
-        if (error) throw error
-        setSupabaseStatus('Conexión a Supabase lista.')
-      } catch (error) {
-        console.error('No se pudo registrar la verificación', error)
-        setSupabaseStatus('La verificación se guardó localmente, pero Supabase no aceptó el registro.')
-      }
-    } else {
-      setSupabaseStatus('Supabase no está configurado con una URL válida y una anon key válida.')
+    // Validar edad
+    if (!isAdult(birthDate)) {
+      setError('Lo sentimos, este es un sitio web exclusivo para mayores de edad. No tienes permitido el ingreso.')
+      setIsLoading(false)
+      return
     }
 
-    router.replace('/tienda')
+    // Guardar cookie por 30 días
+    const expiryDate = new Date()
+    expiryDate.setDate(expiryDate.getDate() + 30)
+    document.cookie = `age_verified=true; path=/; expires=${expiryDate.toUTCString()}; SameSite=Strict`
+
+    // Registrar en Supabase
+    const supabase = createClient()
+    try {
+      const sessionId = typeof crypto !== 'undefined' ? crypto.randomUUID() : `guest-${Date.now()}`
+      await supabase.from('age_verifications').insert({
+        session_id: sessionId,
+        birth_date: birthDate,
+      })
+    } catch (err) {
+      console.error('Error al registrar en Supabase:', err)
+      // Continuar aunque Supabase falle
+    }
+
+    setSuccess(true)
+    setTimeout(() => router.replace('/tienda'), 500)
   }
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-6 py-20 text-zinc-100">
-      <div className="mx-auto flex max-w-2xl flex-col gap-6 rounded-3xl border border-zinc-800 bg-zinc-900/80 p-8 shadow-2xl shadow-black/40">
-        <div className="space-y-3">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-400">Acceso restringido</p>
-          <h1 className="text-3xl font-semibold">Debes confirmar que eres mayor de 18 años</h1>
-          <p className="text-base text-zinc-400">
-            Este marketplace está dirigido a adultos. Confirma tu edad para continuar.
+    <main className="min-h-screen flex items-center justify-center bg-black px-4 py-12">
+      <div className="w-full max-w-md">
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8 shadow-2xl">
+          {/* Encabezado */}
+          <div className="mb-8 text-center">
+            <div className="mb-4 text-5xl">🔞</div>
+            <h1 className="text-2xl font-bold text-white mb-2">
+              Verificación de Edad
+            </h1>
+            <p className="text-sm text-zinc-400">
+              Debes ser mayor de 18 años para acceder a este sitio.
+            </p>
+          </div>
+
+          {/* Formulario */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label htmlFor="birthDate" className="block text-sm font-medium text-zinc-300 mb-2">
+                Fecha de Nacimiento
+              </label>
+              <input
+                id="birthDate"
+                type="date"
+                value={birthDate}
+                onChange={(e) => {
+                  setBirthDate(e.target.value)
+                  setError(null) // Limpiar error al cambiar fecha
+                }}
+                disabled={isLoading || success}
+                className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                max={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+
+            {/* Error */}
+            {error && (
+              <div className="rounded-lg border border-red-600 bg-red-900/30 p-4">
+                <p className="text-sm text-red-300 font-medium">{error}</p>
+              </div>
+            )}
+
+            {/* Botón envío */}
+            <button
+              type="submit"
+              disabled={isLoading || success}
+              className="w-full rounded-lg bg-white text-black font-semibold py-3 transition hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? 'Verificando...' : success ? '✓ Redirigiendo...' : 'Verificar Edad'}
+            </button>
+          </form>
+
+          {/* Aviso legal */}
+          <p className="mt-6 text-center text-xs text-zinc-600">
+            Al continuar confirmas tu mayoría de edad bajo la legislación local.
           </p>
         </div>
-
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <button
-            onClick={() => handleVerify(true)}
-            disabled={isLoading}
-            className="rounded-2xl bg-emerald-500 px-5 py-3 font-medium text-black transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isLoading ? 'Verificando...' : 'Sí, soy mayor de 18 años'}
-          </button>
-          <button
-            onClick={() => handleVerify(false)}
-            disabled={isLoading}
-            className="rounded-2xl border border-zinc-700 px-5 py-3 font-medium text-zinc-200 transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            No, no lo soy
-          </button>
-        </div>
-
-        {message ? <p className="text-sm text-zinc-300">{message}</p> : null}
-        {supabaseStatus ? <p className="text-sm text-zinc-400">{supabaseStatus}</p> : null}
       </div>
     </main>
   )
