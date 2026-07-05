@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { useCart } from '@/components/CartProvider'
+import { useCart } from '@/lib/store/cart'
 
 export default function CartButton() {
   const { count } = useCart()

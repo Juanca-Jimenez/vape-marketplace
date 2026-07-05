@@ -84,7 +84,7 @@ export default async function TiendaPage({ searchParams }: { searchParams: Promi
           <section className="space-y-4">
             {error ? (
               <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-red-300">
-                No se pudieron cargar los productos: {error.message}
+                No se pudieron cargar los productos. Intenta de nuevo.
               </div>
             ) : null}
 

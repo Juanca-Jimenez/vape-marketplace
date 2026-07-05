@@ -12,7 +12,8 @@ export default function VerificarEdadPage() {
   const [success, setSuccess] = useState(false)
 
   useEffect(() => {
-    if (document.cookie.includes('age_verified=true')) {
+    const hasAgeCookie = document.cookie.split(';').some((cookie) => cookie.trim().startsWith('age_verified=true'))
+    if (hasAgeCookie) {
       router.replace('/tienda')
     }
   }, [router])
@@ -39,8 +40,7 @@ export default function VerificarEdadPage() {
     return age >= 18
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async () => {
     setError(null)
     setIsLoading(true)
 
@@ -61,7 +61,8 @@ export default function VerificarEdadPage() {
     // Guardar cookie por 30 días
     const expiryDate = new Date()
     expiryDate.setDate(expiryDate.getDate() + 30)
-    document.cookie = `age_verified=true; path=/; expires=${expiryDate.toUTCString()}; SameSite=Strict`
+    document.cookie = `age_verified=true; path=/; max-age=2592000; expires=${expiryDate.toUTCString()}; SameSite=Lax`
+    localStorage.setItem('age_verified', 'true')
 
     // Registrar en Supabase
     const supabase = createClient()
@@ -79,7 +80,9 @@ export default function VerificarEdadPage() {
     }
 
     setSuccess(true)
-    setTimeout(() => router.replace('/tienda'), 500)
+    setTimeout(() => {
+      window.location.assign('/tienda')
+    }, 250)
   }
 
   return (
@@ -98,7 +101,13 @@ export default function VerificarEdadPage() {
           </div>
 
           {/* Formulario */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form
+            onSubmit={(event) => {
+              event.preventDefault()
+              void handleSubmit()
+            }}
+            className="space-y-6"
+          >
             <div>
               <label htmlFor="birthDate" className="block text-sm font-medium text-zinc-300 mb-2">
                 Fecha de Nacimiento
@@ -127,6 +136,7 @@ export default function VerificarEdadPage() {
             {/* Botón envío */}
             <button
               type="submit"
+              onClick={() => void handleSubmit()}
               disabled={isLoading || success}
               className="w-full rounded-lg bg-white text-black font-semibold py-3 transition hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
