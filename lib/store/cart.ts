@@ -17,8 +17,6 @@ interface CartState {
   removeItem: (productId: string) => void
   updateQuantity: (productId: string, quantity: number) => void
   clearCart: () => void
-  total: number
-  count: number
 }
 
 const storage = typeof window !== 'undefined'
@@ -27,7 +25,7 @@ const storage = typeof window !== 'undefined'
 
 export const useCartStore = create<CartState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       items: [],
       addItem: (product) => {
         set((state) => {
@@ -57,12 +55,6 @@ export const useCartStore = create<CartState>()(
         }))
       },
       clearCart: () => set({ items: [] }),
-      get total() {
-        return get().items.reduce((sum, item) => sum + item.price * item.quantity, 0)
-      },
-      get count() {
-        return get().items.reduce((sum, item) => sum + item.quantity, 0)
-      },
     }),
     {
       name: 'vape_cart',
@@ -72,18 +64,25 @@ export const useCartStore = create<CartState>()(
 )
 
 export function useCart() {
-  const state = useCartStore()
+  const items = useCartStore((state) => state.items)
+  const addItem = useCartStore((state) => state.addItem)
+  const removeItem = useCartStore((state) => state.removeItem)
+  const updateQuantity = useCartStore((state) => state.updateQuantity)
+  const clearCart = useCartStore((state) => state.clearCart)
+
+  const count = items.reduce((sum, item) => sum + item.quantity, 0)
+  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
   return {
-    cart: state.items,
-    items: state.items,
-    count: state.count,
-    total: state.total,
-    addToCart: state.addItem,
-    addItem: state.addItem,
-    removeFromCart: state.removeItem,
-    removeItem: state.removeItem,
-    updateQuantity: state.updateQuantity,
-    clearCart: state.clearCart,
+    cart: items,
+    items,
+    count,
+    total,
+    addToCart: addItem,
+    addItem,
+    removeFromCart: removeItem,
+    removeItem,
+    updateQuantity,
+    clearCart,
   }
 }

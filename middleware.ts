@@ -3,38 +3,58 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 const AGE_GATE_PATH = '/verificar-edad'
 
+function normalizeSupabaseUrl(url: string | undefined): string {
+  if (!url) return ''
+  return url.trim().replace(/\/+$/, '').replace(/\/rest\/v1$/i, '')
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // Skip static assets and API routes
   if (pathname.startsWith('/_next') || pathname.startsWith('/api') || pathname.includes('.')) {
     return NextResponse.next()
   }
 
-  if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll: () => request.cookies.getAll(),
-          setAll: () => {},
-        },
-      }
-    )
+  const supabaseUrl = normalizeSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL)
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
+
+  // ----- Admin route protection -----
+  // All /admin/* paths except /admin/login require a valid session
+  if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')) {
+    if (!supabaseUrl || !supabaseAnonKey) {
+      // Supabase not configured — let the layout handle it
+      return NextResponse.next()
+    }
+
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll: () => request.cookies.getAll(),
+        setAll: () => {},
+      },
+    })
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.redirect(new URL('/admin/login', request.url))
     }
+
+    // Authenticated admin — skip age gate for admin paths
+    return NextResponse.next()
   }
 
-  const isPublicPath = pathname === '/verificar-edad' || pathname.startsWith('/admin/login')
-  const cookieHeader = request.headers.get('cookie') ?? ''
-  const ageVerified = cookieHeader.includes('age_verified=true') || request.cookies.get('age_verified')?.value === 'true'
+  // ----- Age gate -----
+  // /admin/login and /verificar-edad are always public
+  const isPublicPath =
+    pathname === AGE_GATE_PATH ||
+    pathname.startsWith('/admin/login')
+
+  const ageVerified =
+    request.cookies.get('age_verified')?.value === 'true' ||
+    (request.headers.get('cookie') ?? '').includes('age_verified=true')
 
   if (!isPublicPath && !ageVerified) {
-    const url = new URL(AGE_GATE_PATH, request.url)
-    return NextResponse.redirect(url)
+    return NextResponse.redirect(new URL(AGE_GATE_PATH, request.url))
   }
 
   return NextResponse.next()
