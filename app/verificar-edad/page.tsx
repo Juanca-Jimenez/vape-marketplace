@@ -18,12 +18,21 @@ export default function VerificarEdadPage() {
   }, [router])
 
   const isAdult = (dateStr: string): boolean => {
-    const birth = new Date(dateStr)
-    if (isNaN(birth.getTime())) return false
+    const parts = dateStr.split('-')
+    if (parts.length !== 3) return false
+    const birthYear = parseInt(parts[0], 10)
+    const birthMonth = parseInt(parts[1], 10) - 1 // 0-indexed en JS
+    const birthDay = parseInt(parts[2], 10)
+
     const today = new Date()
-    let age = today.getFullYear() - birth.getFullYear()
-    const m = today.getMonth() - birth.getMonth()
-    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--
+    const currentYear = today.getFullYear()
+    const currentMonth = today.getMonth()
+    const currentDay = today.getDate()
+
+    let age = currentYear - birthYear
+    if (currentMonth < birthMonth || (currentMonth === birthMonth && currentDay < birthDay)) {
+      age--
+    }
     return age >= 18
   }
 

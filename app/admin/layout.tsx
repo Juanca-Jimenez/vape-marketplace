@@ -14,7 +14,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const { data: { user } } = await supabase?.auth.getUser() ?? { data: { user: null } }
 
   if (!user) {
-    redirect('/admin/login')
+    return <>{children}</>
   }
 
   return (
