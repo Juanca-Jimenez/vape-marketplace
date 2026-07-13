@@ -1,6 +1,5 @@
-'use client'
+﻿'use client'
 
-import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useCart } from '@/lib/store/cart'
 import { formatCurrency } from '@/lib/utils/formatters'
@@ -34,6 +33,10 @@ export function ProductCard({ product }: ProductCardProps) {
     return () => window.clearTimeout(timer)
   }, [justAdded])
 
+  const marketingBadge = product.stock <= 5
+    ? { label: 'MÁS VENDIDO', classes: 'border border-red-500/30 bg-red-500/15 text-red-200' }
+    : { label: '15% OFF', classes: 'border border-cyan-500/30 bg-cyan-500/15 text-cyan-200' }
+
   const handleAddToCart = () => {
     addItem({
       id: product.id,
@@ -44,99 +47,68 @@ export function ProductCard({ product }: ProductCardProps) {
       image: imageUrl,
       quantity: 1,
     })
+
     setJustAdded(true)
     setShowToast(false)
     window.setTimeout(() => setShowToast(true), 20)
   }
 
   return (
-<<<<<<< HEAD
-    <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[#3B82F6]/20 bg-[#0B0F19] shadow-[0_0_15px_rgba(59,130,246,0.1)] transition duration-300 hover:-translate-y-1 hover:border-[#EF4444]/40 hover:shadow-[0_0_18px_rgba(239,68,68,0.2)]">
-      <div className="relative h-48 overflow-hidden bg-[#08101e]">
-        <img src={imageUrl} alt={product.name} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
-        {product.stock === 0 ? (
-          <span className="absolute left-3 top-3 rounded-full bg-[#EF4444]/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
-            Agotado
-          </span>
-        ) : null}
-      </div>
-
-      <div className="flex flex-1 flex-col gap-3 p-5">
-        <div className="space-y-1">
-          <p className="text-xs uppercase tracking-[0.25em] text-slate-500">{product.brand}</p>
-          <h3 className="text-lg font-semibold text-slate-100">{product.name}</h3>
-        </div>
-
-        <div className="flex flex-wrap gap-2 text-sm text-slate-400">
-          <span className="rounded-full border border-slate-700 px-2 py-1">{product.flavor}</span>
-          <span className="rounded-full border border-slate-700 px-2 py-1">{product.type}</span>
-        </div>
-
-        <div className="mt-auto flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <p className="text-xl font-semibold text-[#00F5FF]">
-              {product.price.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}
-            </p>
-            <span className="text-sm text-slate-400">{product.stock > 0 ? `${product.stock} disponibles` : 'Sin stock'}</span>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleAddToCart}
-            disabled={product.stock === 0}
-            className="rounded-2xl bg-[#3B82F6] px-4 py-3 text-sm font-semibold text-white transition duration-300 hover:bg-[#EF4444] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Agregar al carrito
-          </button>
-=======
     <div className="relative">
-      <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-lg shadow-black/20 transition hover:-translate-y-1 hover:border-emerald-500/40">
-        <div className="relative h-48 overflow-hidden bg-zinc-800">
-          <img src={imageUrl} alt={product.name} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+      <div className="group flex h-full flex-col overflow-hidden rounded-[2rem] border border-blue-500/15 bg-[#050911] shadow-[0_0_30px_rgba(59,130,246,0.12)] transition-all duration-300 hover:-translate-y-1 hover:border-red-500/30 hover:shadow-[0_0_30px_rgba(239,68,68,0.18)]">
+        <div className="relative overflow-hidden rounded-t-[2rem] bg-[#071227]">
+          <img
+            src={imageUrl}
+            alt={product.name}
+            className="h-64 w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+
+          <span className={`absolute left-4 top-4 z-10 rounded-full px-3 py-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.18em] ${marketingBadge.classes}`}>
+            {marketingBadge.label}
+          </span>
+
           {product.stock === 0 ? (
-            <span className="absolute left-3 top-3 rounded-full bg-red-500/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
+            <span className="absolute right-4 top-4 rounded-full bg-black/70 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-white">
               Agotado
             </span>
           ) : null}
         </div>
 
-        <div className="flex flex-1 flex-col gap-3 p-5">
-          <div className="space-y-1">
-            <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">{product.brand}</p>
-            <h3 className="text-lg font-semibold text-white">{product.name}</h3>
+        <div className="flex flex-1 flex-col gap-4 p-6">
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.32em] text-slate-500">{product.brand}</p>
+            <h3 className="text-xl font-semibold text-white">{product.name}</h3>
           </div>
 
-          <div className="flex flex-wrap gap-2 text-sm text-zinc-400">
-            <span className="rounded-full border border-zinc-800 px-2 py-1">{product.flavor}</span>
-            <span className="rounded-full border border-zinc-800 px-2 py-1">{product.type}</span>
+          <div className="flex flex-wrap gap-2 text-sm">
+            <span className="rounded-full border border-blue-500/20 bg-slate-900/80 px-3 py-1 text-blue-300">{product.flavor}</span>
+            <span className="rounded-full border border-blue-500/20 bg-slate-900/80 px-3 py-1 text-blue-300">{product.type}</span>
           </div>
 
           <div className="mt-auto flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <p className="text-xl font-semibold text-emerald-400">
-                {formatCurrency(product.price)}
-              </p>
-              <span className="text-sm text-zinc-400">{product.stock > 0 ? `${product.stock} disponibles` : 'Sin stock'}</span>
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-2xl font-semibold text-white">{formatCurrency(product.price)}</p>
+              <span className="rounded-full bg-slate-900/70 px-3 py-1 text-xs uppercase tracking-[0.18em] text-slate-300">
+                {product.stock > 0 ? `${product.stock} disponibles` : 'Sin stock'}
+              </span>
             </div>
 
-            <div className="flex gap-2">
-              <Link
-                href={`/tienda/${product.id}`}
-                className="flex-1 rounded-2xl border border-zinc-700 px-4 py-3 text-center text-sm font-semibold text-zinc-200 transition hover:border-emerald-400 hover:text-white"
-              >
-                Ver detalle
-              </Link>
-              <button
-                type="button"
-                onClick={handleAddToCart}
-                disabled={product.stock === 0}
-                className="flex-1 rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-black transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {justAdded ? 'Agregado ✓' : 'Agregar al carrito'}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              disabled={product.stock === 0}
+              className="rounded-2xl border border-blue-500/30 bg-transparent px-4 py-3 text-sm font-semibold text-blue-300 transition-all duration-300 hover:border-transparent hover:bg-gradient-to-r hover:from-blue-600 hover:to-red-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {justAdded ? (
+                <span className="inline-flex items-center gap-2 text-red-200">
+                  <span className="text-lg">✓</span>
+                  ¡AÑADIDO!
+                </span>
+              ) : (
+                'Agregar al carrito'
+              )}
+            </button>
           </div>
->>>>>>> e751d2d191afd2ec25b0ebad43e92c44d8d80cf4
         </div>
       </div>
       <Toast message="Producto agregado al carrito" show={showToast} />
