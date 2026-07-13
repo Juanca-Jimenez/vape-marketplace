@@ -53,7 +53,7 @@ export function CheckoutSection() {
     }
 
     const methodLabel = paymentMethod === 'nequi' ? 'Nequi' : 'Lulo / Lave / Daviplata'
-    return `🛸 *¡NUEVO PEDIDO EN VAPEMARKET (TRANSFERENCIA)!* 🛸\n\n👤 *Cliente:* ${name}\n📞 *Teléfono:* ${phone}\n📍 *Dirección:* ${address}${instructions ? `\n📌 *Indicaciones:* ${instructions}` : ''}\n\n🛒 *Productos:*\n${cartSummary}\n\n💰 *TOTAL:* $${total.toLocaleString('es-CO')}\n📱 *Método:* ${methodLabel}\n\n📸 *Adjunto en este chat el comprobante de transferencia por valor de $${total.toLocaleString('es-CO')}. *\n\n⚡ _Quedo atento a la verificación del pago._`
+    return `🛸 *¡NUEVO PEDIDO EN VAPEMARKET (TRANSFERENCIA)!* 🛸\n\n👤 *Cliente:* ${name}\n📞 *Teléfono:* ${phone}\n📍 *Dirección:* ${address}${instructions ? `\n📌 *Indicaciones:* ${instructions}` : ''}\n\n🛒 *Productos:*\n${cartSummary}\n\n💰 *TOTAL:* $${total.toLocaleString('es-CO')}\n📱 *Método:* ${methodLabel}\n\n📸 *Adjunto en este chat el comprobante de transferencia por valor de $${total.toLocaleString('es-CO')}. *\n\n⚡ _Quedo atento a la verificación del pago._\n\n*Realiza tu pedido*`
   }
 
   const router = useRouter()
@@ -96,10 +96,9 @@ export function CheckoutSection() {
       <div className="mx-auto max-w-6xl space-y-10">
         <div className="rounded-[2rem] border border-blue-500/10 bg-[#07101f]/90 p-8 shadow-[0_0_80px_rgba(14,165,233,0.10)]">
           <p className="text-sm uppercase tracking-[0.35em] text-cyan-300">Finaliza tu compra</p>
-          <h1 className="mt-3 text-4xl font-semibold text-white">Checkout Cyberpunk</h1>
-          <p className="mt-4 max-w-3xl text-slate-400">Completa tus datos, elige tu forma de pago y envía tu pedido directo por WhatsApp con estilo neon.</p>
+          <h1 className="mt-3 text-4xl font-semibold text-white">Realiza tu pedido</h1>
+          <p className="mt-4 max-w-3xl text-slate-400">Completa tus datos, elige tu forma de pago y envía tu pedido directo por WhatsApp.</p>
         </div>
-
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1.4fr_0.85fr]">
           <section className="space-y-8 rounded-[2rem] border border-blue-500/10 bg-[#08101f]/90 p-8 shadow-[0_0_80px_rgba(239,68,68,0.08)]">
             <div className="space-y-6">
@@ -238,7 +237,7 @@ export function CheckoutSection() {
               type="button"
               onClick={submitCheckout}
               disabled={isSubmitting}
-              className={`w-full rounded-[2rem] bg-gradient-to-r from-blue-600 to-red-600 px-6 py-4 text-base font-bold tracking-wide text-white transition-all duration-300 shadow-[0_0_25px_rgba(59,130,246,0.35)] hover:from-blue-500 hover:to-red-500 hover:shadow-[0_0_35px_rgba(239,68,68,0.45)] ${isSubmitting ? 'opacity-70' : 'animate-[pulse_1.8s_ease-in-out_infinite]'}`}
+              className={`w-full rounded-[2rem] bg-gradient-to-r from-blue-600 to-red-600 px-6 py-4 text-base font-bold tracking-wide text-white transition-all duration-300 shadow-[0_0_25px_rgba(59,130,246,0.35)] hover:from-blue-500 hover:to-red-500 hover:shadow-[0_0_35px_rgba(239,68,68,0.45)] ${isSubmitting ? 'opacity-70' : ''}`}
             >
               {isSubmitting ? 'Generando pedido...' : 'FINALIZAR PEDIDO EN WHATSAPP'}
             </button>

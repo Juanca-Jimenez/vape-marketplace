@@ -59,9 +59,9 @@ export default async function TiendaPage({ searchParams }: { searchParams: Promi
       <div className="mx-auto flex max-w-7xl flex-col gap-8">
         <div className="flex flex-col gap-4 rounded-[2rem] border border-cyan-500/10 bg-[#08102A]/90 p-6 shadow-[0_0_80px_rgba(14,165,233,0.10)] lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-sm uppercase tracking-[0.35em] text-cyan-300">Catálogo Cyber-Neon</p>
-            <h1 className="mt-2 text-3xl font-semibold text-white">Explora el mejor vapeo futurista</h1>
-            <p className="mt-2 max-w-2xl text-slate-400">Filtra por marca, sabor o tipo y descubre productos con estilo neon rojo/azul.</p>
+            <p className="text-sm uppercase tracking-[0.35em] text-cyan-300">Catálogo</p>
+            <h1 className="mt-2 text-3xl font-semibold text-white">Explora el mejor vapeo</h1>
+            <p className="mt-2 max-w-2xl text-slate-400">Filtra por marca, sabor o tipo y descubre productos.</p>
           </div>
 
           <form action="/tienda" method="get" className="flex w-full max-w-xl gap-3">
