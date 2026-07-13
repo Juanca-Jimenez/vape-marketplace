@@ -25,5 +25,9 @@
     "eslint-config-next": "16.2.9",
     "tailwindcss": "^4",
     "typescript": "^5"
-  }
+  },
+  "main": "index.js",
+  "repository": "https://github.com/Juanca-Jimenez/vape-marketplace.git",
+  "author": "sariaspo <sariaspo@unal.edu.co>",
+  "license": "MIT"
 }

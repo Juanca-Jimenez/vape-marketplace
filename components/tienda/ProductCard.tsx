@@ -34,11 +34,11 @@ export function ProductCard({ product }: ProductCardProps) {
   }
 
   return (
-    <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-lg shadow-black/20 transition hover:-translate-y-1 hover:border-emerald-500/40">
-      <div className="relative h-48 overflow-hidden bg-zinc-800">
+    <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[#3B82F6]/20 bg-[#0B0F19] shadow-[0_0_15px_rgba(59,130,246,0.1)] transition duration-300 hover:-translate-y-1 hover:border-[#EF4444]/40 hover:shadow-[0_0_18px_rgba(239,68,68,0.2)]">
+      <div className="relative h-48 overflow-hidden bg-[#08101e]">
         <img src={imageUrl} alt={product.name} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
         {product.stock === 0 ? (
-          <span className="absolute left-3 top-3 rounded-full bg-red-500/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
+          <span className="absolute left-3 top-3 rounded-full bg-[#EF4444]/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
             Agotado
           </span>
         ) : null}
@@ -46,28 +46,28 @@ export function ProductCard({ product }: ProductCardProps) {
 
       <div className="flex flex-1 flex-col gap-3 p-5">
         <div className="space-y-1">
-          <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">{product.brand}</p>
-          <h3 className="text-lg font-semibold text-white">{product.name}</h3>
+          <p className="text-xs uppercase tracking-[0.25em] text-slate-500">{product.brand}</p>
+          <h3 className="text-lg font-semibold text-slate-100">{product.name}</h3>
         </div>
 
-        <div className="flex flex-wrap gap-2 text-sm text-zinc-400">
-          <span className="rounded-full border border-zinc-800 px-2 py-1">{product.flavor}</span>
-          <span className="rounded-full border border-zinc-800 px-2 py-1">{product.type}</span>
+        <div className="flex flex-wrap gap-2 text-sm text-slate-400">
+          <span className="rounded-full border border-slate-700 px-2 py-1">{product.flavor}</span>
+          <span className="rounded-full border border-slate-700 px-2 py-1">{product.type}</span>
         </div>
 
         <div className="mt-auto flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <p className="text-xl font-semibold text-emerald-400">
+            <p className="text-xl font-semibold text-[#00F5FF]">
               {product.price.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}
             </p>
-            <span className="text-sm text-zinc-400">{product.stock > 0 ? `${product.stock} disponibles` : 'Sin stock'}</span>
+            <span className="text-sm text-slate-400">{product.stock > 0 ? `${product.stock} disponibles` : 'Sin stock'}</span>
           </div>
 
           <button
             type="button"
             onClick={handleAddToCart}
             disabled={product.stock === 0}
-            className="rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-black transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-2xl bg-[#3B82F6] px-4 py-3 text-sm font-semibold text-white transition duration-300 hover:bg-[#EF4444] disabled:cursor-not-allowed disabled:opacity-50"
           >
             Agregar al carrito
           </button>
