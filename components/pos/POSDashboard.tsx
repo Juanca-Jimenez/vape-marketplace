@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import LogoutButton from '@/components/LogoutButton'
 
 type Category = 'Todos' | 'Desechables' | 'Líquidos' | 'Accesorios'
 
@@ -56,18 +57,12 @@ export function POSDashboard() {
 
       const { data } = await supabase
         .from('products')
-        .select('id, name, brand, flavor, type, price, stock, is_active')
+        .select('*')
         .eq('is_active', true)
+        .order('name', { ascending: true })
 
       if (data) {
-        setProducts(
-          (data as Product[])
-            .filter((product) => CATEGORY_LABELS.includes(product.type))
-            .map((product) => ({
-              ...product,
-              type: CATEGORY_LABELS.includes(product.type) ? product.type : 'Todos',
-            })),
-        )
+        setProducts(data as Product[])
       }
 
       setLoadingProducts(false)
@@ -164,29 +159,36 @@ export function POSDashboard() {
       <div className="grid h-full min-h-0 grid-cols-12 gap-6 px-5 py-5">
         <section className="col-span-12 flex min-h-0 flex-col gap-6 overflow-hidden rounded-[2rem] border border-blue-500/10 bg-[#030712] p-5 shadow-[0_0_60px_rgba(14,165,233,0.10)] lg:col-span-8">
           <div className="space-y-3 rounded-[1.75rem] border border-blue-500/20 bg-[#08101f]/90 p-5">
-            <div className="flex flex-wrap gap-3">
-              {CATEGORY_LABELS.map((category) => {
-                const isActive = activeCategory === category
-                return (
-                  <button
-                    key={category}
-                    type="button"
-                    onClick={() => setActiveCategory(category)}
-                    className={`rounded-3xl border px-5 py-4 text-sm font-semibold transition ${
-                      isActive
-                        ? 'border-cyan-400 bg-cyan-400/10 text-cyan-200'
-                        : 'border-blue-500/30 bg-[#05101d] text-cyan-300'
-                    } active:border-red-500 active:bg-red-500/10 active:text-white`}
-                  >
-                    {category}
-                  </button>
-                )
-              })}
-            </div>
-            <div className="rounded-[1.75rem] border border-blue-500/20 bg-[#050c18]/90 p-6">
-              <p className="text-sm uppercase tracking-[0.35em] text-cyan-300">Panel de Productos</p>
-              <h2 className="mt-3 text-3xl font-semibold text-white">Venta rápida</h2>
-              <p className="mt-2 max-w-2xl text-slate-400">Toca un producto para sumar al ticket y ajusta cantidades en la mesa derecha.</p>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-3">
+                  {CATEGORY_LABELS.map((category) => {
+                    const isActive = activeCategory === category
+                    return (
+                      <button
+                        key={category}
+                        type="button"
+                        onClick={() => setActiveCategory(category)}
+                        className={`rounded-3xl border px-5 py-4 text-sm font-semibold transition ${
+                          isActive
+                            ? 'border-cyan-400 bg-cyan-400/10 text-cyan-200'
+                            : 'border-blue-500/30 bg-[#05101d] text-cyan-300'
+                        } active:border-red-500 active:bg-red-500/10 active:text-white`}
+                      >
+                        {category}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div className="rounded-[1.75rem] border border-blue-500/20 bg-[#050c18]/90 p-6">
+                  <p className="text-sm uppercase tracking-[0.35em] text-cyan-300">Panel de Productos</p>
+                  <h2 className="mt-3 text-3xl font-semibold text-white">Venta rápida</h2>
+                  <p className="mt-2 max-w-2xl text-slate-400">Toca un producto para sumar al ticket y ajusta cantidades en la mesa derecha.</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-end">
+                <LogoutButton />
+              </div>
             </div>
           </div>
 

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils/formatters'
+import LogoutButton from '@/components/LogoutButton'
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   pending_payment: { label: 'Pago pendiente', color: 'bg-yellow-500/15 text-yellow-300' },
@@ -86,9 +87,12 @@ export default async function AdminPage() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-semibold text-white">Dashboard</h1>
-        <p className="mt-2 text-sm text-zinc-400">Resumen general del marketplace.</p>
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-semibold text-white">Dashboard</h1>
+          <p className="mt-2 text-sm text-zinc-400">Resumen general del marketplace.</p>
+        </div>
+        <LogoutButton />
       </div>
 
       {/* Stat cards */}

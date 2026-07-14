@@ -19,12 +19,17 @@ export async function middleware(request: NextRequest) {
   const supabaseUrl = normalizeSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL)
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
 
+  const roleCookie = request.cookies.get('vape_role')?.value
+
   // ----- Admin route protection -----
-  // All /admin/* paths except /admin/login require a valid session
+  // All /admin/* paths except /admin/login require admin access
   if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')) {
-    if (!supabaseUrl || !supabaseAnonKey) {
-      // Supabase not configured — let the layout handle it
+    if (roleCookie === 'admin') {
       return NextResponse.next()
+    }
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return NextResponse.redirect(new URL('/login', request.url))
     }
 
     const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
@@ -36,18 +41,26 @@ export async function middleware(request: NextRequest) {
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      return NextResponse.redirect(new URL('/admin/login', request.url))
+      return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    // Authenticated admin — skip age gate for admin paths
     return NextResponse.next()
   }
 
+  if (pathname.startsWith('/pos')) {
+    if (roleCookie === 'pos' || roleCookie === 'admin') {
+      return NextResponse.next()
+    }
+
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+
   // ----- Age gate -----
-  // /admin/login and /verificar-edad are always public
+  // /admin/login, /login and /verificar-edad are always public
   const isPublicPath =
     pathname === AGE_GATE_PATH ||
-    pathname.startsWith('/admin/login')
+    pathname.startsWith('/admin/login') ||
+    pathname === '/login'
 
   const ageVerified =
     request.cookies.get('age_verified')?.value === 'true' ||

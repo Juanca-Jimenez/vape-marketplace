@@ -48,7 +48,7 @@ export default function Navbar() {
             </button>
           </div>
 
-          <div className="hidden items-center gap-6 md:flex">
+          <div className="hidden items-center gap-4 md:flex">
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -65,6 +65,12 @@ export default function Navbar() {
                 />
               </Link>
             ))}
+            <Link
+              href="/login"
+              className="inline-flex items-center rounded-2xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-300 hover:bg-cyan-400/15 hover:text-white"
+            >
+              Iniciar sesión
+            </Link>
           </div>
 
           <CartButton />

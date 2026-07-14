@@ -2,10 +2,10 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import LogoutButton from '@/components/LogoutButton'
 
 interface AdminSidebarProps {
   userEmail: string
-  signOut: () => Promise<void>
 }
 
 const navLinks = [
@@ -41,7 +41,7 @@ const navLinks = [
   },
 ]
 
-export default function AdminSidebar({ userEmail, signOut }: AdminSidebarProps) {
+export default function AdminSidebar({ userEmail }: AdminSidebarProps) {
   const pathname = usePathname()
 
   const isActive = (href: string, exact: boolean) =>
@@ -93,17 +93,7 @@ export default function AdminSidebar({ userEmail, signOut }: AdminSidebarProps) 
 
       {/* Footer / Sign out */}
       <div className="border-t border-zinc-800 p-4">
-        <form action={signOut}>
-          <button
-            type="submit"
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-zinc-400 transition hover:bg-red-500/10 hover:text-red-300"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            Cerrar sesión
-          </button>
-        </form>
+        <LogoutButton />
       </div>
     </aside>
   )
