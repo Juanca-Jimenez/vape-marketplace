@@ -21,7 +21,6 @@ export default function CarritoPage() {
       triggerToast(`${item.name} eliminado del carrito`)
       return
     }
-
     updateQuantity(item.id, item.quantity - 1)
     triggerToast('Cantidad actualizada')
   }
@@ -42,96 +41,154 @@ export default function CarritoPage() {
   }
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-6 py-16 text-zinc-100">
+    <main className="min-h-screen bg-white px-6 py-16 text-[#0F172A]">
       <div className="mx-auto max-w-6xl space-y-8">
-        <div className="flex flex-col gap-4 rounded-3xl border border-zinc-800 bg-zinc-900/80 p-8 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-emerald-400">Carrito</p>
-            <h1 className="mt-3 text-3xl font-semibold">Tus artículos</h1>
-            <p className="mt-3 max-w-xl text-sm text-zinc-400">Aquí puedes revisar los productos agregados, ajustar cantidades y ver el total acumulado del pedido.</p>
-          </div>
-          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-5 text-right">
-            <p className="text-sm text-zinc-400">Productos agregados</p>
-            <p className="mt-2 text-3xl font-semibold text-emerald-400">{count}</p>
-            <p className="mt-3 text-sm text-zinc-400">Suma total</p>
-            <p className="mt-1 text-2xl font-semibold text-white">{formatCurrency(total)}</p>
+        {/* Header */}
+        <div className="flex flex-col gap-2">
+          <p className="bg-gradient-to-r from-[#2563EB] via-[#9333EA] to-[#DC2626] bg-clip-text text-sm font-semibold uppercase tracking-[0.35em] text-transparent">
+            Carrito
+          </p>
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <h1 className="text-3xl font-semibold text-[#0F172A]">Tus artículos</h1>
+            <p className="text-sm text-[#475569]">
+              {count === 0 ? 'Aún no has agregado nada' : `${count} ${count === 1 ? 'producto' : 'productos'} en tu carrito`}
+            </p>
           </div>
         </div>
 
         {cart.length === 0 ? (
-          <div className="rounded-3xl border border-zinc-800 bg-zinc-900/80 p-10 text-center">
-            <h2 className="text-2xl font-semibold text-white">Tu carrito está vacío</h2>
-            <p className="mt-3 text-zinc-400">Agrega productos desde el catálogo para comenzar tu pedido.</p>
-            <Link href="/tienda" className="mt-6 inline-flex rounded-2xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-black transition hover:bg-emerald-400">
+          <div className="flex flex-col items-center gap-4 rounded-[2rem] border border-[#E2E8F0] bg-white p-16 text-center shadow-xl shadow-[rgba(37,99,235,0.08)]">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#F8FAFC] text-3xl">
+              🛒
+            </div>
+            <h2 className="text-2xl font-semibold text-[#0F172A]">Tu carrito está vacío</h2>
+            <p className="max-w-sm text-sm text-[#475569]">
+              Explora el catálogo y agrega tus productos favoritos para armar tu pedido.
+            </p>
+            <Link
+              href="/tienda"
+              className="mt-2 inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-[#2563EB] via-[#9333EA] to-[#DC2626] bg-[length:200%_100%] bg-[position:0%_0%] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-[rgba(147,51,234,0.08)] transition-all duration-300 hover:scale-[1.03] hover:bg-[position:100%_0%] active:scale-[0.98]"
+            >
               Ir al catálogo
             </Link>
           </div>
         ) : (
-          <>
-            <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/80">
-              <div className="divide-y divide-zinc-800">
-                {cart.map((item) => (
-                  <div key={item.id} className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-4">
-                      <img src={item.image} alt={item.name} className="h-20 w-20 rounded-3xl object-cover" />
-                      <div>
-                        <p className="text-lg font-semibold text-white">{item.name}</p>
-                        <p className="text-sm text-zinc-400">{item.brand} • {item.flavor}</p>
-                        <p className="mt-2 text-sm text-zinc-400">{item.quantity} × {formatCurrency(item.price)}</p>
-                      </div>
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
+            {/* Lista de productos */}
+            <section className="space-y-4">
+              {cart.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex flex-col gap-4 rounded-[1.75rem] border border-[#E2E8F0] bg-white p-5 shadow-lg shadow-[rgba(37,99,235,0.05)] transition-shadow hover:shadow-xl hover:shadow-[rgba(37,99,235,0.08)] sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="h-20 w-20 flex-shrink-0 rounded-2xl border border-[#E2E8F0] object-cover"
+                    />
+                    <div>
+                      <p className="text-base font-semibold text-[#0F172A]">{item.name}</p>
+                      <p className="mt-1 text-sm text-[#475569]">
+                        {item.brand} · {item.flavor}
+                      </p>
+                      <p className="mt-1 text-sm text-[#64748B]">
+                        {formatCurrency(item.price)} c/u
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end sm:justify-center sm:gap-3">
+                    <div className="flex items-center gap-1 rounded-full border border-[#E2E8F0] bg-[#F8FAFC] p-1">
+                      <button
+                        type="button"
+                        onClick={() => handleQuantityDecrease(item)}
+                        aria-label={`Reducir cantidad de ${item.name}`}
+                        className="flex h-8 w-8 items-center justify-center rounded-full text-[#0F172A] transition hover:bg-white hover:shadow-sm"
+                      >
+                        −
+                      </button>
+                      <span className="w-6 text-center text-sm font-semibold text-[#0F172A]">
+                        {item.quantity}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleQuantityIncrease(item)}
+                        aria-label={`Aumentar cantidad de ${item.name}`}
+                        className="flex h-8 w-8 items-center justify-center rounded-full text-[#0F172A] transition hover:bg-white hover:shadow-sm"
+                      >
+                        +
+                      </button>
                     </div>
 
-                    <div className="flex flex-col items-start gap-3 sm:items-end">
-                      <div className="flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200">
-                        <button
-                          type="button"
-                          onClick={() => handleQuantityDecrease(item)}
-                          className="h-8 w-8 rounded-full bg-zinc-800 text-white transition hover:bg-zinc-700"
-                        >
-                          -
-                        </button>
-                        <span>{item.quantity}</span>
-                        <button
-                          type="button"
-                          onClick={() => handleQuantityIncrease(item)}
-                          className="h-8 w-8 rounded-full bg-zinc-800 text-white transition hover:bg-zinc-700"
-                        >
-                          +
-                        </button>
-                      </div>
-                      <div className="text-sm text-emerald-400">{formatCurrency(item.price * item.quantity)}</div>
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm font-semibold text-[#0F172A]">
+                        {formatCurrency(item.price * item.quantity)}
+                      </span>
                       <button
                         type="button"
                         onClick={() => handleRemoveItem(item)}
-                        className="rounded-full border border-red-500 px-4 py-2 text-sm text-red-300 transition hover:bg-red-500/10"
+                        className="text-sm font-medium text-[#DC2626]/80 underline-offset-2 transition hover:text-[#DC2626] hover:underline"
                       >
                         Eliminar
                       </button>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
+              ))}
 
-            <div className="flex flex-col gap-4 rounded-3xl border border-zinc-800 bg-zinc-900/80 p-6 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-zinc-400">¿Listo para comprar? Revisa tu pedido y finaliza.</p>
-              <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handleClearCart}
+                className="text-sm font-medium text-[#64748B] transition hover:text-[#DC2626]"
+              >
+                Vaciar carrito
+              </button>
+            </section>
+
+            {/* Resumen del pedido */}
+            <aside className="h-fit lg:sticky lg:top-8">
+              <div className="rounded-[2rem] border border-[#E2E8F0] bg-white p-6 shadow-xl shadow-[rgba(37,99,235,0.08)]">
+                <h2 className="text-lg font-semibold text-[#0F172A]">Resumen del pedido</h2>
+
+                <div className="mt-5 space-y-3 border-b border-[#E2E8F0] pb-5 text-sm">
+                  <div className="flex justify-between text-[#475569]">
+                    <span>Subtotal ({count} {count === 1 ? 'producto' : 'productos'})</span>
+                    <span className="font-medium text-[#0F172A]">{formatCurrency(total)}</span>
+                  </div>
+                  <div className="flex justify-between text-[#475569]">
+                    <span>Envío</span>
+                    <span className="text-[#64748B]">Se calcula al pagar</span>
+                  </div>
+                </div>
+
+                <div className="mt-5 flex items-center justify-between">
+                  <span className="text-base font-semibold text-[#0F172A]">Total</span>
+                  <span className="bg-gradient-to-r from-[#2563EB] via-[#9333EA] to-[#DC2626] bg-clip-text text-2xl font-bold text-transparent">
+                    {formatCurrency(total)}
+                  </span>
+                </div>
+
                 <Link
                   href="/checkout"
-                  className="inline-flex rounded-2xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-black transition hover:bg-emerald-400"
+                  className="mt-6 flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#2563EB] via-[#9333EA] to-[#DC2626] bg-[length:200%_100%] bg-[position:0%_0%] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-[rgba(147,51,234,0.08)] transition-all duration-300 hover:scale-[1.02] hover:bg-[position:100%_0%] active:scale-[0.98]"
                 >
                   Finalizar compra
                 </Link>
-                <button
-                  type="button"
-                  onClick={handleClearCart}
-                  className="inline-flex rounded-2xl bg-red-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-500"
+
+                <Link
+                  href="/tienda"
+                  className="mt-3 flex w-full items-center justify-center rounded-2xl border border-[#E2E8F0] px-6 py-3 text-sm font-medium text-[#0F172A] transition hover:border-transparent hover:bg-[#F8FAFC]"
                 >
-                  Vaciar carrito
-                </button>
+                  Seguir comprando
+                </Link>
+
+                <p className="mt-4 text-center text-xs text-[#64748B]">
+                  🔒 Pago seguro · Verificación de edad requerida
+                </p>
               </div>
-            </div>
-          </>
+            </aside>
+          </div>
         )}
       </div>
       <Toast message={toast.message} show={toast.show} />

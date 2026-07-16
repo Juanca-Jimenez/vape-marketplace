@@ -53,8 +53,10 @@ export default function VerificarEdadPage() {
     setIsLoading(true)
 
     // Set cookie first — this is what the middleware checks
-    document.cookie = 'age_verified=true; path=/; max-age=2592000; SameSite=Lax'
-    localStorage.setItem('age_verified', 'true')
+    // Removing max-age makes it a session cookie, valid only for the current session.
+    document.cookie = 'age_verified=true; path=/; SameSite=Lax'
+    sessionStorage.setItem('age_verified', 'true')
+    localStorage.removeItem('age_verified') // cleanup old localStorage if present
 
     // Fire-and-forget Supabase insert (don't block redirect on this)
     try {

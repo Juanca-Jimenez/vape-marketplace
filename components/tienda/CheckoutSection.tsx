@@ -1,8 +1,8 @@
 'use client'
 
-import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { FormEvent, useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useCart, type CartProduct } from '@/lib/store/cart'
+import { useCart } from '@/lib/store/cart'
 import { formatCurrency } from '@/lib/utils/formatters'
 
 const paymentMethods = [
@@ -10,22 +10,19 @@ const paymentMethods = [
     value: 'nequi',
     title: 'Transferencia Nequi',
     description: 'Transfiere al celular 300 123 4567 y envía el comprobante por WhatsApp.',
-    accent: 'text-blue-300',
-    pill: 'bg-blue-500/10 text-cyan-300 ring-blue-500/20',
+    icon: '📱',
   },
   {
     value: 'lulo',
     title: 'Transferencia Lulo / Lave / Daviplata',
     description: 'Transfiere al celular 300 123 4567 y envía el comprobante por WhatsApp.',
-    accent: 'text-blue-300',
-    pill: 'bg-blue-500/10 text-cyan-300 ring-blue-500/20',
+    icon: '🟣',
   },
   {
     value: 'cash',
     title: 'Efectivo / Pago al recibir',
     description: 'Pagarás tu pedido en efectivo. Coordina la entrega por WhatsApp con un asesor.',
-    accent: 'text-red-300',
-    pill: 'bg-red-500/10 text-red-300 ring-red-500/20',
+    icon: '💵',
   },
 ]
 
@@ -39,6 +36,7 @@ export function CheckoutSection() {
   const [instructions, setInstructions] = useState('')
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodValue>('nequi')
   const [errorMessage, setErrorMessage] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({ name: false, phone: false, address: false })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '573137175806'
@@ -64,8 +62,20 @@ export function CheckoutSection() {
     }
   }, [cart.length, router])
 
+  const handlePhoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const digitsOnly = event.target.value.replace(/\D/g, '')
+    setPhone(digitsOnly)
+  }
+
   const submitCheckout = () => {
-    if (!name.trim() || !phone.trim() || !address.trim()) {
+    const errors = {
+      name: !name.trim(),
+      phone: !phone.trim(),
+      address: !address.trim(),
+    }
+    setFieldErrors(errors)
+
+    if (errors.name || errors.phone || errors.address) {
       setErrorMessage('Completa Nombre, Teléfono y Dirección para continuar.')
       return
     }
@@ -89,155 +99,220 @@ export function CheckoutSection() {
     submitCheckout()
   }
 
-  const selectedMethod = paymentMethods.find((method) => method.value === paymentMethod)
+  const inputClass = (hasError: boolean) =>
+    `w-full rounded-2xl border bg-white px-4 py-3.5 text-[#0F172A] outline-none transition placeholder:text-[#94A3B8] focus:shadow-[0_0_0_3px_rgba(147,51,234,0.12)] ${hasError ? 'border-[#DC2626] focus:border-[#DC2626]' : 'border-[#E2E8F0] focus:border-transparent'
+    }`
 
   return (
-    <main className="min-h-screen bg-[#030712] px-6 py-16 text-slate-100">
-      <div className="mx-auto max-w-6xl space-y-10">
-        <div className="rounded-[2rem] border border-blue-500/10 bg-[#07101f]/90 p-8 shadow-[0_0_80px_rgba(14,165,233,0.10)]">
-          <p className="text-sm uppercase tracking-[0.35em] text-cyan-300">Finaliza tu compra</p>
-          <h1 className="mt-3 text-4xl font-semibold text-white">Realiza tu pedido</h1>
-          <p className="mt-4 max-w-3xl text-slate-400">Completa tus datos, elige tu forma de pago y envía tu pedido directo por WhatsApp.</p>
+    <main className="min-h-screen bg-white px-6 py-16 text-[#0F172A]">
+      <div className="mx-auto max-w-6xl space-y-8">
+        {/* Header */}
+        <div className="rounded-[2rem] border border-[#E2E8F0] bg-white p-8 shadow-xl shadow-[rgba(37,99,235,0.08)]">
+          <p className="bg-gradient-to-r from-[#2563EB] via-[#9333EA] to-[#DC2626] bg-clip-text text-sm font-semibold uppercase tracking-[0.35em] text-transparent">
+            Finaliza tu compra
+          </p>
+          <h1 className="mt-3 text-4xl font-semibold text-[#0F172A]">Realiza tu pedido</h1>
+          <p className="mt-3 max-w-2xl text-[#475569]">
+            Completa tus datos, elige tu forma de pago y envía tu pedido directo por WhatsApp.
+          </p>
         </div>
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1.4fr_0.85fr]">
-          <section className="space-y-8 rounded-[2rem] border border-blue-500/10 bg-[#08101f]/90 p-8 shadow-[0_0_80px_rgba(239,68,68,0.08)]">
-            <div className="space-y-6">
-              <div className="rounded-[1.75rem] border border-blue-500/20 bg-[#050c18]/80 p-6 shadow-[0_0_25px_rgba(59,130,246,0.10)]">
-                <h2 className="text-xl font-semibold text-white">Datos de envío</h2>
-                <p className="mt-2 text-sm text-slate-400">Nombre completo, teléfono y dirección son obligatorios para procesar tu pedido.</p>
-                <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-slate-300">Nombre Completo</label>
-                    <input
-                      value={name}
-                      onChange={(event) => setName(event.target.value)}
-                      placeholder="Ej. Juan Pérez"
-                      className="w-full rounded-3xl border border-blue-500/20 bg-[#020911] px-4 py-4 text-white outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-slate-300">Teléfono de Contacto</label>
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={(event) => setPhone(event.target.value)}
-                      placeholder="Ej. 3001234567"
-                      className="w-full rounded-3xl border border-blue-500/20 bg-[#020911] px-4 py-4 text-white outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-slate-300">Dirección de Envío Completa</label>
-                    <input
-                      value={address}
-                      onChange={(event) => setAddress(event.target.value)}
-                      placeholder="Calle, número, barrio, ciudad"
-                      className="w-full rounded-3xl border border-blue-500/20 bg-[#020911] px-4 py-4 text-white outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-slate-300">Indicaciones adicionales (opcional)</label>
-                    <textarea
-                      value={instructions}
-                      onChange={(event) => setInstructions(event.target.value)}
-                      rows={3}
-                      placeholder="Ej. Dejar en la portería o cerca de la moto..."
-                      className="w-full rounded-3xl border border-blue-500/20 bg-[#020911] px-4 py-4 text-white outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20"
-                    />
-                  </div>
-                </form>
-              </div>
 
-              <div className="rounded-[1.75rem] border border-blue-500/20 bg-[#050c18]/80 p-6 shadow-[0_0_25px_rgba(59,130,246,0.10)]">
-                <h2 className="text-xl font-semibold text-white">Métodos de pago</h2>
-                <p className="mt-2 text-sm text-slate-400">Selecciona la opción que prefieras para completar tu pedido.</p>
-                <div className="mt-6 grid gap-4">
-                  {paymentMethods.map((method) => {
-                    const isSelected = paymentMethod === method.value
-                    return (
-                      <button
-                        key={method.value}
-                        type="button"
-                        onClick={() => setPaymentMethod(method.value as PaymentMethodValue)}
-                        className={`group flex w-full items-start justify-between gap-4 rounded-[1.5rem] border px-5 py-5 text-left transition ${isSelected ? 'border-red-500/40 bg-[#101623]' : 'border-blue-500/10 bg-[#020812]'} hover:border-cyan-400/40 hover:bg-[#08131f]`}
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.4fr_0.85fr]">
+          {/* Columna principal */}
+          <section className="space-y-6">
+            {/* Datos de envío */}
+            <div className="rounded-[1.75rem] border border-[#E2E8F0] bg-white p-6 shadow-lg shadow-[rgba(37,99,235,0.05)]">
+              <h2 className="text-xl font-semibold text-[#0F172A]">Datos de envío</h2>
+              <p className="mt-2 text-sm text-[#475569]">
+                Nombre completo, teléfono y dirección son obligatorios para procesar tu pedido.
+              </p>
+              <form onSubmit={handleSubmit} className="mt-6 space-y-5" noValidate>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-[#0F172A]">
+                    Nombre completo <span className="text-[#DC2626]">*</span>
+                  </label>
+                  <input
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    placeholder="Ej. Juan Pérez"
+                    required
+                    className={inputClass(fieldErrors.name)}
+                  />
+                  {fieldErrors.name && (
+                    <p className="text-xs text-[#DC2626]">Este campo es obligatorio.</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-[#0F172A]">
+                    Teléfono de contacto <span className="text-[#DC2626]">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={phone}
+                    onChange={handlePhoneChange}
+                    placeholder="Ej. 3001234567"
+                    required
+                    maxLength={10}
+                    className={inputClass(fieldErrors.phone)}
+                  />
+                  {fieldErrors.phone && (
+                    <p className="text-xs text-[#DC2626]">Este campo es obligatorio.</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-[#0F172A]">
+                    Dirección de envío completa <span className="text-[#DC2626]">*</span>
+                  </label>
+                  <input
+                    value={address}
+                    onChange={(event) => setAddress(event.target.value)}
+                    placeholder="Calle, número, barrio, ciudad"
+                    required
+                    className={inputClass(fieldErrors.address)}
+                  />
+                  {fieldErrors.address && (
+                    <p className="text-xs text-[#DC2626]">Este campo es obligatorio.</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-[#0F172A]">
+                    Indicaciones adicionales <span className="text-[#64748B] font-normal">(opcional)</span>
+                  </label>
+                  <textarea
+                    value={instructions}
+                    onChange={(event) => setInstructions(event.target.value)}
+                    rows={3}
+                    placeholder="Ej. Dejar en la portería o cerca de la moto..."
+                    className={inputClass(false)}
+                  />
+                </div>
+              </form>
+            </div>
+
+            {/* Métodos de pago */}
+            <div className="rounded-[1.75rem] border border-[#E2E8F0] bg-white p-6 shadow-lg shadow-[rgba(37,99,235,0.05)]">
+              <h2 className="text-xl font-semibold text-[#0F172A]">Métodos de pago</h2>
+              <p className="mt-2 text-sm text-[#475569]">Selecciona la opción que prefieras para completar tu pedido.</p>
+              <div className="mt-6 grid gap-3">
+                {paymentMethods.map((method) => {
+                  const isSelected = paymentMethod === method.value
+                  return (
+                    <button
+                      key={method.value}
+                      type="button"
+                      onClick={() => setPaymentMethod(method.value as PaymentMethodValue)}
+                      className={`flex w-full items-center justify-between gap-4 rounded-2xl border px-5 py-4 text-left transition ${isSelected
+                          ? 'border-transparent bg-[#F8FAFC] shadow-[0_0_0_2px_rgba(147,51,234,0.35)]'
+                          : 'border-[#E2E8F0] bg-white hover:border-[#9333EA]/30 hover:bg-[#F8FAFC]'
+                        }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[#F8FAFC] text-xl">
+                          {method.icon}
+                        </span>
+                        <div>
+                          <p className="text-base font-semibold text-[#0F172A]">{method.title}</p>
+                          <p className="mt-0.5 text-sm text-[#475569]">{method.description}</p>
+                        </div>
+                      </div>
+                      <div
+                        className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border text-xs transition ${isSelected
+                            ? 'border-transparent bg-gradient-to-r from-[#2563EB] via-[#9333EA] to-[#DC2626] text-white'
+                            : 'border-[#E2E8F0] text-transparent'
+                          }`}
                       >
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-3">
-                            <span className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl ${method.pill}`}>{method.value === 'cash' ? '💵' : method.value === 'nequi' ? '📱' : '🟣'}</span>
-                            <div>
-                              <p className={`text-lg font-semibold ${isSelected ? 'text-white' : 'text-slate-100'}`}>{method.title}</p>
-                              <p className="text-sm text-slate-400">{method.description}</p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className={`flex h-7 w-7 items-center justify-center rounded-full border transition ${isSelected ? 'border-cyan-400 bg-cyan-400 text-[#030712]' : 'border-slate-700 text-slate-500'}`}>
-                          {isSelected ? '✓' : ''}
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
+                        ✓
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
+            </div>
 
-              <div className="rounded-[1.75rem] border border-blue-500/20 bg-[#050c18]/80 p-6 shadow-[0_0_25px_rgba(59,130,246,0.10)]">
-                <div className="rounded-3xl border border-blue-500/20 bg-[#071822]/80 p-5 text-slate-300">
-                  <p className="text-sm font-semibold text-white">Información de pago</p>
-                  <p className="mt-3 text-sm leading-7">
-                    {paymentMethod === 'cash' ? (
-                      'Pagarás tu pedido en efectivo. Tu orden se enviará a WhatsApp para coordinar la entrega con un asesor.'
-                    ) : (
-                      <>Transfiere al celular: <span className="text-cyan-300">300 123 4567</span> y luego envía el comprobante por WhatsApp para que procesemos tu pedido.</>
-                    )}
-                  </p>
-                </div>
-              </div>
+            {/* Info de pago */}
+            <div className="rounded-[1.75rem] border border-[#E2E8F0] bg-[#F8FAFC] p-6">
+              <p className="text-sm font-semibold text-[#0F172A]">Información de pago</p>
+              <p className="mt-2 text-sm leading-6 text-[#475569]">
+                {paymentMethod === 'cash' ? (
+                  'Pagarás tu pedido en efectivo. Tu orden se enviará a WhatsApp para coordinar la entrega con un asesor.'
+                ) : (
+                  <>
+                    Transfiere al celular:{' '}
+                    <span className="font-semibold text-[#9333EA]">300 123 4567</span> y luego envía el
+                    comprobante por WhatsApp para que procesemos tu pedido.
+                  </>
+                )}
+              </p>
             </div>
           </section>
 
-          <aside className="space-y-6 rounded-[2rem] border border-blue-500/10 bg-[#07101f]/90 p-8 shadow-[0_0_80px_rgba(14,165,233,0.10)]">
-            <div className="rounded-[1.75rem] border border-blue-500/20 bg-[#050d19]/80 p-6 text-slate-300 shadow-[0_0_20px_rgba(59,130,246,0.08)]">
-              <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">Resumen del pedido</p>
-              <div className="mt-6 space-y-4">
+          {/* Resumen */}
+          <aside className="h-fit space-y-6 lg:sticky lg:top-8">
+            <div className="rounded-[2rem] border border-[#E2E8F0] bg-white p-6 shadow-xl shadow-[rgba(37,99,235,0.08)]">
+              <p className="bg-gradient-to-r from-[#2563EB] via-[#9333EA] to-[#DC2626] bg-clip-text text-sm font-semibold uppercase tracking-[0.3em] text-transparent">
+                Resumen del pedido
+              </p>
+              <div className="mt-5 space-y-3">
                 {cart.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between gap-3 rounded-3xl border border-blue-500/10 bg-[#03121f]/80 p-4">
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between gap-3 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4"
+                  >
                     <div>
-                      <p className="font-semibold text-white">{item.name}</p>
-                      <p className="text-sm text-slate-400">x{item.quantity} · {formatCurrency(item.price)}</p>
+                      <p className="text-sm font-semibold text-[#0F172A]">{item.name}</p>
+                      <p className="text-sm text-[#64748B]">
+                        x{item.quantity} · {formatCurrency(item.price)}
+                      </p>
                     </div>
-                    <p className="text-sm font-semibold text-cyan-300">{formatCurrency(item.price * item.quantity)}</p>
+                    <p className="text-sm font-semibold text-[#0F172A]">
+                      {formatCurrency(item.price * item.quantity)}
+                    </p>
                   </div>
                 ))}
               </div>
-              <div className="mt-6 rounded-3xl border border-blue-500/10 bg-[#020a14]/80 p-5">
-                <div className="flex items-center justify-between text-sm text-slate-400">
-                  <span>Total</span>
-                  <span className="text-xl font-semibold text-white">{formatCurrency(total)}</span>
-                </div>
+              <div className="mt-5 flex items-center justify-between border-t border-[#E2E8F0] pt-5">
+                <span className="text-sm font-medium text-[#475569]">Total</span>
+                <span className="bg-gradient-to-r from-[#2563EB] via-[#9333EA] to-[#DC2626] bg-clip-text text-2xl font-bold text-transparent">
+                  {formatCurrency(total)}
+                </span>
               </div>
             </div>
 
-            <div className="rounded-[1.75rem] border border-blue-500/20 bg-[#050d19]/80 p-6 text-slate-300 shadow-[0_0_20px_rgba(239,68,68,0.08)]">
-              <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">Estado del pago</p>
+            <div className="rounded-[1.75rem] border border-[#E2E8F0] bg-white p-6 shadow-lg shadow-[rgba(37,99,235,0.05)]">
+              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[#64748B]">Estado del pago</p>
               <div className="mt-4 space-y-3">
-                <div className="flex items-center gap-3 rounded-3xl border border-blue-500/20 bg-[#03101f]/80 p-4">
-                  <div className="h-10 w-10 rounded-2xl bg-cyan-400/10 text-cyan-300 flex items-center justify-center">🛡️</div>
-                  <p className="text-sm text-slate-300">Pago seguro con seguimiento directo por WhatsApp.</p>
+                <div className="flex items-center gap-3 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-white text-lg">
+                    🛡️
+                  </div>
+                  <p className="text-sm text-[#475569]">Pago seguro con seguimiento directo por WhatsApp.</p>
                 </div>
-                <div className="flex items-center gap-3 rounded-3xl border border-blue-500/20 bg-[#03101f]/80 p-4">
-                  <div className="h-10 w-10 rounded-2xl bg-red-500/10 text-red-300 flex items-center justify-center">⚡</div>
-                  <p className="text-sm text-slate-300">Recibe instrucciones claras para tu método elegido.</p>
+                <div className="flex items-center gap-3 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-white text-lg">
+                    ⚡
+                  </div>
+                  <p className="text-sm text-[#475569]">Recibe instrucciones claras para tu método elegido.</p>
                 </div>
               </div>
             </div>
 
             {errorMessage ? (
-              <div className="rounded-3xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">{errorMessage}</div>
+              <div className="rounded-2xl border border-[#DC2626]/20 bg-[#DC2626]/5 p-4 text-sm text-[#DC2626]">
+                {errorMessage}
+              </div>
             ) : null}
 
             <button
               type="button"
               onClick={submitCheckout}
               disabled={isSubmitting}
-              className={`w-full rounded-[2rem] bg-gradient-to-r from-blue-600 to-red-600 px-6 py-4 text-base font-bold tracking-wide text-white transition-all duration-300 shadow-[0_0_25px_rgba(59,130,246,0.35)] hover:from-blue-500 hover:to-red-500 hover:shadow-[0_0_35px_rgba(239,68,68,0.45)] ${isSubmitting ? 'opacity-70' : ''}`}
+              className={`w-full rounded-2xl bg-gradient-to-r from-[#2563EB] via-[#9333EA] to-[#DC2626] bg-[length:200%_100%] bg-[position:0%_0%] px-6 py-4 text-base font-bold tracking-wide text-white shadow-lg shadow-[rgba(147,51,234,0.08)] transition-all duration-300 hover:scale-[1.02] hover:bg-[position:100%_0%] active:scale-[0.98] ${isSubmitting ? 'opacity-70' : ''
+                }`}
             >
               {isSubmitting ? 'Generando pedido...' : 'FINALIZAR PEDIDO EN WHATSAPP'}
             </button>

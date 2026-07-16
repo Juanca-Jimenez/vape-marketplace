@@ -31,7 +31,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     )
   }
 
-  const { data: product, error } = await supabase.from('products').select('*').eq('id', id).single()
+  const { data: product, error } = await supabase.from('products').select('*').eq('id', id).eq('is_active', true).single()
 
   if (error) {
     const isMissingProduct = error.code === 'PGRST116' || error.message?.toLowerCase().includes('no rows')
