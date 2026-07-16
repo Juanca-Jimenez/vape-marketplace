@@ -72,22 +72,25 @@ export default function VerificarEdadPage() {
     }
 
     // Redirect immediately after setting cookie
-    window.location.assign('/tienda')
+    window.location.assign('/home')
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-black px-4 py-12">
-      <div className="w-full max-w-md">
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8 shadow-2xl">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#0B1120] px-4 py-12">
+      {/* Glow background effect */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-tr from-purple-600 via-pink-600 to-red-600 opacity-20 blur-[130px]" />
+
+      <div className="relative z-10 w-full max-w-md">
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl">
           <div className="mb-8 text-center">
             <div className="mb-4 text-5xl">🔞</div>
             <h1 className="mb-2 text-2xl font-bold text-white">Verificación de Edad</h1>
-            <p className="text-sm text-zinc-400">Debes ser mayor de 18 años para acceder a este sitio.</p>
+            <p className="text-sm text-slate-300">Debes ser mayor de 18 años para acceder a este sitio.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="birthDate" className="mb-2 block text-sm font-medium text-zinc-300">
+              <label htmlFor="birthDate" className="mb-2 block text-sm font-medium text-slate-200">
                 Fecha de Nacimiento
               </label>
               <input
@@ -97,26 +100,26 @@ export default function VerificarEdadPage() {
                 onChange={(e) => { setBirthDate(e.target.value); setError(null) }}
                 disabled={isLoading}
                 max={new Date().toISOString().split('T')[0]}
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 text-white focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
 
             {error && (
-              <div className="rounded-lg border border-red-600 bg-red-900/30 p-4">
-                <p className="text-sm font-medium text-red-300">{error}</p>
+              <div className="rounded-xl border border-red-500/50 bg-red-500/10 p-4">
+                <p className="text-sm font-medium text-red-200">{error}</p>
               </div>
             )}
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full rounded-lg bg-white py-3 font-semibold text-black transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-xl bg-gradient-to-r from-red-500 to-red-900  py-3.5 font-semibold text-white shadow-lg shadow-pink-500/25 transition-all hover:scale-[1.02] hover:shadow-pink-500/40 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
             >
               {isLoading ? 'Redirigiendo...' : 'Verificar Edad'}
             </button>
           </form>
 
-          <p className="mt-6 text-center text-xs text-zinc-600">
+          <p className="mt-6 text-center text-xs text-slate-400">
             Al continuar confirmas tu mayoría de edad bajo la legislación local.
           </p>
         </div>

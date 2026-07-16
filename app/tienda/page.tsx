@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { Filtros } from '@/components/tienda/Filtros'
 import { ProductCard, type Product } from '@/components/tienda/ProductCard'
 import { createClient } from '@/lib/supabase/server'
@@ -199,9 +200,7 @@ export default async function TiendaPage({ searchParams }: { searchParams: Promi
 
             {/* Marca */}
             <div className="lg:col-span-2">
-              <h2 className="bg-gradient-to-r from-[#2563EB] via-[#9333EA] to-[#DC2626] bg-clip-text text-3xl font-bold text-transparent">
-                The V Society
-              </h2>
+              <img src="/logo.png" alt="The V Society" className="h-12 object-contain" />
 
               <p className="mt-4 max-w-md text-sm leading-relaxed text-[#475569]">
                 Marketplace especializado en productos de vapeo originales.
@@ -231,10 +230,10 @@ export default async function TiendaPage({ searchParams }: { searchParams: Promi
               </h3>
 
               <ul className="mt-4 space-y-3 text-sm text-[#475569]">
-                <li><a href="/tienda">Catálogo</a></li>
-                <li><a href="/carrito">Carrito</a></li>
-                <li><a href="/tienda?tipo=Desechable">Desechables</a></li>
-                <li><a href="/tienda?tipo=Pod%20recargable">Pods</a></li>
+                <li><Link href="/tienda">Catálogo</Link></li>
+                <li><Link href="/carrito">Carrito</Link></li>
+                <li><Link href="/tienda?tipo=Desechable">Desechables</Link></li>
+                <li><Link href="/tienda?tipo=Pod%20recargable">Pods</Link></li>
               </ul>
             </div>
 
