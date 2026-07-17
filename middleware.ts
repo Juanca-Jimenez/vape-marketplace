@@ -19,58 +19,75 @@ export async function middleware(request: NextRequest) {
   const supabaseUrl = normalizeSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL)
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
 
-  const roleCookie = request.cookies.get('vape_role')?.value
-
-  // ----- Admin route protection -----
-  // All /admin/* paths except /admin/login require admin access
-  if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')) {
-    if (roleCookie === 'admin') {
-      return NextResponse.next()
-    }
-
-    if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
-
-    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-      cookies: {
-        getAll: () => request.cookies.getAll(),
-        setAll: () => {},
-      },
-    })
-
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
-
-    return NextResponse.next()
-  }
-
-  if (pathname.startsWith('/pos')) {
-    if (roleCookie === 'pos' || roleCookie === 'admin') {
-      return NextResponse.next()
-    }
-
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
-
-  // ----- Age gate -----
-  // /admin/login, /login and /verificar-edad are always public
+  // ----- Age gate (se evalúa primero, es liviano y no requiere red) -----
   const isPublicPath =
     pathname === AGE_GATE_PATH ||
     pathname.startsWith('/admin/login') ||
     pathname === '/login'
 
-  const ageVerified =
-    request.cookies.get('age_verified')?.value === 'true' ||
-    (request.headers.get('cookie') ?? '').includes('age_verified=true')
+  const ageVerified = request.cookies.get('age_verified')?.value === 'true'
 
   if (!isPublicPath && !ageVerified) {
     return NextResponse.redirect(new URL(AGE_GATE_PATH, request.url))
   }
 
-  return NextResponse.next()
+  // Rutas que no necesitan validar rol: seguimos de largo
+  const needsRoleCheck = pathname.startsWith('/admin') || pathname.startsWith('/pos')
+  if (!needsRoleCheck) {
+    return NextResponse.next()
+  }
+
+  if (pathname.startsWith('/admin/login')) {
+    return NextResponse.next()
+  }
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  // response mutable: necesario para que Supabase pueda refrescar
+  // el JWT/cookies de sesión si están por expirar
+  let response = NextResponse.next()
+
+  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll: () => request.cookies.getAll(),
+      setAll: (cookiesToSet) => {
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+        response = NextResponse.next({ request })
+        cookiesToSet.forEach(({ name, value, options }) =>
+          response.cookies.set(name, value, options)
+        )
+      },
+    },
+  })
+
+  // getUser() SIEMPRE, nunca getSession(): valida el JWT contra el
+  // servidor de Supabase en vez de solo leer la cookie sin verificar.
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  // El rol sale de la tabla profiles, no del JWT (no usamos Auth Hook).
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  const role = profile?.role ?? 'customer'
+
+  if (pathname.startsWith('/admin') && role !== 'admin') {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  if (pathname.startsWith('/pos') && role !== 'admin' && role !== 'pos') {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  return response
 }
 
 export const config = {

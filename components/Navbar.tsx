@@ -24,7 +24,7 @@ export default function Navbar() {
         <p className="animate-pulse py-1">100% GARANTÍA DE ORIGINALIDAD</p>
       </div>
 
-      <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-0.4 sm:px-7 lg:px-2">
+      <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-0.5 sm:px-7 lg:px-2">
         <div className="flex items-center justify-between gap-4">
           <Link
             href="/"
@@ -67,7 +67,7 @@ export default function Navbar() {
             ))}
             <Link
               href="/login"
-              className="inline-flex items-center rounded-2xl border border-purple-400/30 bg-purple-400/10 px-4 py-2 text-sm font-semibold text-white-100 transition hover:border-purple-300 hover:bg-white-400/15 hover:text-white"
+              className="inline-flex items-center rounded-2xl border border-purple-400/30 bg-purple-400/10 px-4 py-2 text-sm font-semibold text-white transition hover:border-purple-300 hover:bg-white/15 hover:text-white"
             >
               Iniciar sesión
             </Link>
