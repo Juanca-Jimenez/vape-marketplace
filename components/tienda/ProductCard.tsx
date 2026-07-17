@@ -56,7 +56,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
   const marketingBadge = product.stock <= 5
     ? {
-      label: 'MÁS VENDIDO',
+      label: 'NUEVO',
       classes: 'bg-gradient-to-r from-[#2563EB] via-[#9333EA] to-[#DC2626] text-white shadow-md shadow-[rgba(147,51,234,0.15)]',
     }
     : {
@@ -104,7 +104,7 @@ export function ProductCard({ product }: ProductCardProps) {
           <img
             src={imageUrl}
             alt={product.name}
-            className="h-36 w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="h-50 w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
 
           <span

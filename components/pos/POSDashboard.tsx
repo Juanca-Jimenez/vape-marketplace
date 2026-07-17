@@ -1,335 +1,338 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import LogoutButton from '@/components/LogoutButton'
+import { useMemo, useState } from 'react'
+import { createBrowserClient } from '@supabase/ssr'
+import type { Product } from '@/components/tienda/ProductCard'
 
-type Category = 'Todos' | 'Desechables' | 'Líquidos' | 'Accesorios'
-
-type Product = {
-  id: string
-  name: string
-  price: number
-  type: string
-  brand?: string
-  flavor?: string
-  stock: number
+type CartItem = {
+  product: Product
+  quantity: number
 }
 
-const CATEGORY_LABELS: Category[] = ['Todos', 'Desechables', 'Líquidos', 'Accesorios']
+type PaymentMethod = 'efectivo' | 'tarjeta' | 'transferencia'
 
-const FALLBACK_PRODUCTS: Product[] = [
-  { id: '1', name: 'Vape Bar Storm', price: 36000, type: 'Desechables', stock: 12 },
-  { id: '2', name: 'Liquid Neon Blue', price: 29000, type: 'Líquidos', stock: 8 },
-  { id: '3', name: 'Pod Pulse X', price: 42000, type: 'Accesorios', stock: 18 },
-  { id: '4', name: 'Vape Bar Ruby', price: 36000, type: 'Desechables', stock: 14 },
-  { id: '5', name: 'Liquid Midnight', price: 31000, type: 'Líquidos', stock: 10 },
-  { id: '6', name: 'Cable Warp', price: 19000, type: 'Accesorios', stock: 20 },
-  { id: '7', name: 'Vape Bar Ice', price: 36000, type: 'Desechables', stock: 11 },
-  { id: '8', name: 'Liquid Solar', price: 33000, type: 'Líquidos', stock: 7 },
-  { id: '9', name: 'Funda Shield', price: 24000, type: 'Accesorios', stock: 16 },
+const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: string }[] = [
+  { value: 'efectivo', label: 'Efectivo', icon: '💵' },
+  { value: 'tarjeta', label: 'Tarjeta', icon: '💳' },
+  { value: 'transferencia', label: 'Transferencia', icon: '📲' },
 ]
 
-const formatPrice = (value: number) =>
-  new Intl.NumberFormat('es-CO', {
+function formatCOP(value: number) {
+  return new Intl.NumberFormat('es-CO', {
     style: 'currency',
     currency: 'COP',
-    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(value)
+}
 
-export function POSDashboard() {
-  const [activeCategory, setActiveCategory] = useState<Category>('Todos')
-  const [products, setProducts] = useState<Product[]>(FALLBACK_PRODUCTS)
-  const [loadingProducts, setLoadingProducts] = useState(true)
-  const [ticket, setTicket] = useState<{ product: Product; quantity: number }[]>([])
-  const [selectedPayment, setSelectedPayment] = useState<'efectivo' | 'nequi' | 'datáfono'>('efectivo')
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
+function getSupabaseClient() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
 
-  useEffect(() => {
-    const loadProducts = async () => {
-      const supabase = createClient()
-      if (!supabase) {
-        setProducts(FALLBACK_PRODUCTS)
-        setLoadingProducts(false)
-        return
-      }
+export function POSDashboard({ initialProducts = [] }: { initialProducts?: Product[] }) {
+  const [products, setProducts] = useState<Product[]>(initialProducts ?? [])
+  const [cart, setCart] = useState<CartItem[]>([])
+  const [search, setSearch] = useState('')
+  const [tipoFiltro, setTipoFiltro] = useState<string>('Todos')
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('efectivo')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
-      const { data } = await supabase
-        .from('products')
-        .select('*')
-        .eq('is_active', true)
-        .order('name', { ascending: true })
+  const tipos = useMemo(() => {
+    const unique = Array.from(new Set((products ?? []).map((p) => p.type).filter(Boolean)))
+    return ['Todos', ...unique]
+  }, [products])
 
-      if (data) {
-        setProducts(data as Product[])
-      }
-
-      setLoadingProducts(false)
-    }
-
-    void loadProducts()
-  }, [])
-
-  const filteredProducts = useMemo(() => {
-    if (activeCategory === 'Todos') return products
-    return products.filter((product) => product.type === activeCategory)
-  }, [activeCategory, products])
+  const productosFiltrados = useMemo(() => {
+    return (products ?? []).filter((product) => {
+      const coincideTipo = tipoFiltro === 'Todos' || product.type === tipoFiltro
+      const coincideBusqueda = product.name.toLowerCase().includes(search.toLowerCase())
+      return coincideTipo && coincideBusqueda
+    })
+  }, [products, tipoFiltro, search])
 
   const total = useMemo(
-    () => ticket.reduce((sum, item) => sum + item.product.price * item.quantity, 0),
-    [ticket],
+    () => cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0),
+    [cart]
   )
 
-  const addItem = (product: Product) => {
-    if (product.stock <= 0) return
+  const totalUnidades = useMemo(
+    () => cart.reduce((sum, item) => sum + item.quantity, 0),
+    [cart]
+  )
 
-    setTicket((current) => {
-      const existing = current.find((item) => item.product.id === product.id)
+  function addToCart(product: Product) {
+    setError('')
+    setSuccess('')
+    setCart((prev) => {
+      const existing = prev.find((item) => item.product.id === product.id)
+      const cantidadActual = existing?.quantity ?? 0
+
+      if (cantidadActual >= product.stock) return prev
+
       if (existing) {
-        return current.map((item) =>
-          item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item,
+        return prev.map((item) =>
+          item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         )
       }
-      return [...current, { product, quantity: 1 }]
+
+      return [...prev, { product, quantity: 1 }]
     })
   }
 
-  const changeQuantity = (productId: string, delta: number) => {
-    setTicket((current) =>
-      current
-        .map((item) =>
-          item.product.id === productId ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item,
-        )
-        .filter((item) => item.quantity > 0),
+  function updateQuantity(productId: string, delta: number) {
+    setCart((prev) =>
+      prev
+        .map((item) => {
+          if (item.product.id !== productId) return item
+          const nuevaCantidad = item.quantity + delta
+          return { ...item, quantity: Math.min(Math.max(nuevaCantidad, 0), item.product.stock) }
+        })
+        .filter((item) => item.quantity > 0)
     )
   }
 
-  const removeItem = (productId: string) => {
-    setTicket((current) => current.filter((item) => item.product.id !== productId))
+  function removeFromCart(productId: string) {
+    setCart((prev) => prev.filter((item) => item.product.id !== productId))
   }
 
-  const finalizePurchase = async () => {
-    if (ticket.length === 0 || isProcessing) return
+  function clearCart() {
+    setCart([])
+    setError('')
+    setSuccess('')
+  }
 
-    setIsProcessing(true)
-    setMessage(null)
+  async function confirmarVenta() {
+    if (cart.length === 0) return
 
-    const supabase = createClient()
-    if (!supabase) {
-      setMessage('No se pudo conectar con el servicio de stock. Revisa la configuración de Supabase.')
-      setIsProcessing(false)
+    setLoading(true)
+    setError('')
+    setSuccess('')
+
+    const supabase = getSupabaseClient()
+
+    const items = cart.map((item) => ({
+      product_id: item.product.id,
+      quantity: item.quantity,
+    }))
+
+    const { data: orderId, error: rpcError } = await supabase.rpc('process_pos_sale', {
+      p_items: items,
+      p_payment_method: paymentMethod,
+    })
+
+    if (rpcError) {
+      setError(rpcError.message || 'No se pudo procesar la venta. Intenta de nuevo.')
+      setLoading(false)
       return
     }
 
-    try {
-      const operations = ticket.map((item) => {
-        const stockLeft = Math.max(0, item.product.stock - item.quantity)
-        return supabase.from('products').update({ stock: stockLeft }).eq('id', item.product.id)
+    setProducts((prev) =>
+      (prev ?? []).map((product) => {
+        const vendido = cart.find((item) => item.product.id === product.id)
+        return vendido ? { ...product, stock: product.stock - vendido.quantity } : product
       })
+    )
 
-      await Promise.all(operations)
-      setMessage('Compra finalizada. Stock actualizado correctamente.')
-      setTicket([])
-
-      const { data } = await supabase
-        .from('products')
-        .select('id, name, brand, flavor, type, price, stock, is_active')
-        .eq('is_active', true)
-
-      if (data) {
-        setProducts(
-          (data as Product[])
-            .filter((product) => CATEGORY_LABELS.includes(product.type))
-            .map((product) => ({
-              ...product,
-              type: CATEGORY_LABELS.includes(product.type) ? product.type : 'Todos',
-            })),
-        )
-      }
-    } catch (error) {
-      setMessage('Ocurrió un error al finalizar la compra. Intenta de nuevo.')
-    }
-
-    setIsProcessing(false)
+    setSuccess(`Venta registrada correctamente (orden ${String(orderId).slice(0, 8)}).`)
+    setCart([])
+    setLoading(false)
   }
 
   return (
-    <main className="h-screen overflow-hidden bg-[#030712] text-slate-100">
-      <div className="grid h-full min-h-0 grid-cols-12 gap-6 px-5 py-5">
-        <section className="col-span-12 flex min-h-0 flex-col gap-6 overflow-hidden rounded-[2rem] border border-blue-500/10 bg-[#030712] p-5 shadow-[0_0_60px_rgba(14,165,233,0.10)] lg:col-span-8">
-          <div className="space-y-3 rounded-[1.75rem] border border-blue-500/20 bg-[#08101f]/90 p-5">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="space-y-3">
-                <div className="flex flex-wrap gap-3">
-                  {CATEGORY_LABELS.map((category) => {
-                    const isActive = activeCategory === category
-                    return (
-                      <button
-                        key={category}
-                        type="button"
-                        onClick={() => setActiveCategory(category)}
-                        className={`rounded-3xl border px-5 py-4 text-sm font-semibold transition ${
-                          isActive
-                            ? 'border-cyan-400 bg-cyan-400/10 text-cyan-200'
-                            : 'border-blue-500/30 bg-[#05101d] text-cyan-300'
-                        } active:border-red-500 active:bg-red-500/10 active:text-white`}
-                      >
-                        {category}
-                      </button>
-                    )
-                  })}
-                </div>
-                <div className="rounded-[1.75rem] border border-blue-500/20 bg-[#050c18]/90 p-6">
-                  <p className="text-sm uppercase tracking-[0.35em] text-cyan-300">Panel de Productos</p>
-                  <h2 className="mt-3 text-3xl font-semibold text-white">Venta rápida</h2>
-                  <p className="mt-2 max-w-2xl text-slate-400">Toca un producto para sumar al ticket y ajusta cantidades en la mesa derecha.</p>
-                </div>
-              </div>
-              <div className="flex items-center justify-end">
-                <LogoutButton />
-              </div>
+    <main className="min-h-screen bg-white text-[#0F172A]">
+      <div className="border-b border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3 text-center">
+        <p className="text-xs font-medium sm:text-sm">
+          🧾 Punto de venta —{' '}
+          <span className="bg-gradient-to-r from-[#2563EB] via-[#9333EA] to-[#DC2626] bg-clip-text font-semibold text-transparent">
+            The V Society
+          </span>
+        </p>
+      </div>
+
+      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:px-8">
+        {/* Columna productos */}
+        <section className="space-y-6">
+          <div className="rounded-[2rem] border border-[#E2E8F0] bg-white p-6 shadow-xl shadow-[rgba(37,99,235,0.08)]">
+            <p className="bg-gradient-to-r from-[#2563EB] via-[#9333EA] to-[#DC2626] bg-clip-text text-sm font-semibold uppercase tracking-[0.35em] text-transparent">
+              Productos
+            </p>
+            <h1 className="mt-2 text-2xl font-semibold">Selecciona lo que va a llevar el cliente</h1>
+
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Buscar producto..."
+              className="mt-4 w-full rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3 text-sm outline-none transition focus:border-transparent focus:shadow-[0_0_0_3px_rgba(147,51,234,0.12)]"
+            />
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              {tipos.map((tipo) => (
+                <button
+                  key={tipo}
+                  onClick={() => setTipoFiltro(tipo)}
+                  className={`rounded-full px-4 py-2 text-xs font-semibold transition ${tipoFiltro === tipo
+                    ? 'bg-gradient-to-r from-[#2563EB] via-[#9333EA] to-[#DC2626] text-white shadow-md'
+                    : 'border border-[#E2E8F0] text-[#475569] hover:border-[#9333EA]/40'
+                    }`}
+                >
+                  {tipo}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="grid h-full min-h-0 gap-4 overflow-auto pb-4 sm:grid-cols-2 xl:grid-cols-3">
-            {filteredProducts.map((product) => (
-              <button
-                key={product.id}
-                type="button"
-                onClick={() => addItem(product)}
-                className="group flex h-44 flex-col justify-between rounded-[1.75rem] border border-blue-500/20 bg-[#0B0F19] p-5 text-left transition active:border-red-500 active:bg-red-500/10"
-              >
-                <div className="space-y-3">
-                  <div className="h-28 rounded-3xl bg-gradient-to-br from-blue-700 via-slate-900 to-slate-800 p-4 text-white shadow-[0_15px_30px_rgba(14,165,233,0.15)]">
-                    <p className="text-sm uppercase tracking-[0.35em] text-cyan-300">{product.type}</p>
-                    <p className="mt-3 text-xl font-semibold">{product.name}</p>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-400">Toque para agregar</span>
-                  <span className="text-lg font-semibold text-cyan-300">{formatPrice(product.price)}</span>
-                </div>
-              </button>
-            ))}
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
+            {productosFiltrados.length === 0 ? (
+              <div className="col-span-full rounded-[2rem] border border-[#E2E8F0] bg-white p-10 text-center text-[#475569] shadow-lg shadow-[rgba(37,99,235,0.06)]">
+                No hay productos disponibles con ese filtro.
+              </div>
+            ) : (
+              productosFiltrados.map((product) => {
+                const enCarrito = cart.find((item) => item.product.id === product.id)?.quantity ?? 0
+                const disponible = product.stock - enCarrito
+
+                return (
+                  <button
+                    key={product.id}
+                    onClick={() => addToCart(product)}
+                    disabled={disponible <= 0}
+                    className="group flex flex-col overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white text-left shadow-md shadow-[rgba(37,99,235,0.06)] transition hover:-translate-y-1 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
+                  >
+                    <div className="aspect-square w-full overflow-hidden bg-[#F8FAFC]">
+                      {product.images?.[0] ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={product.images[0]}
+                          alt={product.name}
+                          className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-3xl">💨</div>
+                      )}
+                    </div>
+                    <div className="flex flex-1 flex-col gap-1 p-3">
+                      <p className="line-clamp-2 text-sm font-semibold">{product.name}</p>
+                      <p className="text-xs text-[#475569]">{product.brand}</p>
+                      <div className="mt-auto flex items-center justify-between pt-2">
+                        <span className="text-sm font-bold text-[#0F172A]">{formatCOP(product.price)}</span>
+                        <span className="text-[10px] font-medium text-[#475569]">Stock: {disponible}</span>
+                      </div>
+                    </div>
+                  </button>
+                )
+              })
+            )}
           </div>
         </section>
 
-        <aside className="col-span-12 flex h-full min-h-0 flex-col gap-6 rounded-[2rem] border border-blue-500/10 bg-slate-900 p-5 shadow-[-10px_0_30px_rgba(59,130,246,0.05)] lg:col-span-4">
-          <div className="space-y-3 rounded-[1.75rem] border border-blue-500/20 bg-[#07101f]/90 p-5">
-            <p className="text-sm uppercase tracking-[0.35em] text-cyan-300">Ticket en vivo</p>
-            <h2 className="text-3xl font-semibold text-white">Carrito POS</h2>
-            <p className="text-slate-400">Ajusta cantidades rápidamente y cierra la venta con un solo toque.</p>
-          </div>
-
-          <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden rounded-[1.75rem] border border-blue-500/10 bg-[#050b14]/90">
-            <div className="min-h-0 overflow-auto p-4">
-              {ticket.length === 0 ? (
-                <div className="flex h-64 items-center justify-center rounded-[1.5rem] border border-dashed border-blue-500/20 bg-[#07101f]/90 text-center text-slate-500">
-                  <p className="px-6 text-sm">No hay artículos en el ticket. Toca cualquier producto para iniciar la venta.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {ticket.map((item) => (
-                    <div key={item.product.id} className="flex items-center justify-between gap-3 rounded-3xl border border-blue-500/10 bg-[#08111f]/90 p-4">
-                      <div className="flex-1">
-                        <p className="font-semibold text-white">{item.product.name}</p>
-                        <p className="text-sm text-slate-400">{formatPrice(item.product.price)}</p>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-slate-200">
-                        <button
-                          type="button"
-                          onClick={() => changeQuantity(item.product.id, -1)}
-                          className="inline-flex h-12 w-12 items-center justify-center rounded-3xl border border-red-500/30 bg-red-500/10 text-red-300 active:bg-red-500/20"
-                        >
-                          -
-                        </button>
-                        <span className="min-w-[2.5rem] text-center text-lg font-semibold text-white">{item.quantity}</span>
-                        <button
-                          type="button"
-                          onClick={() => changeQuantity(item.product.id, 1)}
-                          className="inline-flex h-12 w-12 items-center justify-center rounded-3xl border border-cyan-400/30 bg-cyan-400/10 text-cyan-300 active:bg-cyan-400/20"
-                        >
-                          +
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => removeItem(item.product.id)}
-                          className="inline-flex h-12 w-12 items-center justify-center rounded-3xl border border-red-500/30 bg-red-500/10 text-red-200 active:bg-red-500/20"
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-4 rounded-[1.75rem] border border-blue-500/20 bg-[#07111e]/90 p-6">
+        {/* Columna carrito */}
+        <aside className="h-fit space-y-4 lg:sticky lg:top-8">
+          <div className="rounded-[2rem] border border-[#E2E8F0] bg-white p-6 shadow-xl shadow-[rgba(37,99,235,0.08)]">
             <div className="flex items-center justify-between">
-              <p className="text-sm uppercase tracking-[0.35em] text-slate-400">Total</p>
-              <span className="text-cyan-400 text-5xl font-bold">{formatPrice(total)}</span>
+              <h2 className="text-lg font-semibold">Venta actual</h2>
+              {cart.length > 0 ? (
+                <button onClick={clearCart} className="text-xs font-semibold text-[#DC2626] hover:underline">
+                  Vaciar
+                </button>
+              ) : null}
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={() => setSelectedPayment('efectivo')}
-                className={`rounded-[1.5rem] border px-4 py-5 text-left text-sm font-semibold transition active:bg-green-500/10 ${
-                  selectedPayment === 'efectivo'
-                    ? 'border-cyan-400 bg-cyan-400/10 text-cyan-100'
-                    : 'border-slate-700 bg-[#030712] text-slate-200'
-                }`}
-              >
-                <p className="text-2xl">💵 EFECTIVO</p>
-                <p className="mt-2 text-xs text-slate-400">Cierre rápido de caja</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedPayment('nequi')}
-                className={`rounded-[1.5rem] border px-4 py-5 text-left text-sm font-semibold transition active:bg-red-500/10 ${
-                  selectedPayment === 'nequi'
-                    ? 'border-cyan-400 bg-gradient-to-r from-red-500/20 via-fuchsia-500/10 to-violet-600/10 text-slate-100'
-                    : 'border-slate-700 bg-[#030712] text-slate-200'
-                }`}
-              >
-                <p className="text-2xl">📱 NEQUI / TRANSFERENCIA</p>
-                <p className="mt-2 text-xs text-slate-400">Recibo digital inmediato</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedPayment('datáfono')}
-                className={`rounded-[1.5rem] border px-4 py-5 text-left text-sm font-semibold transition active:bg-blue-500/10 ${
-                  selectedPayment === 'datáfono'
-                    ? 'border-cyan-400 bg-cyan-400/10 text-cyan-100'
-                    : 'border-slate-700 bg-[#030712] text-slate-200'
-                }`}
-              >
-                <p className="text-2xl">💳 DATÁFONO / TARJETA</p>
-                <p className="mt-2 text-xs text-slate-400">Venta con terminal POS</p>
-              </button>
-              <div className="rounded-[1.5rem] border border-slate-700 bg-[#030712] p-4 text-sm text-slate-400">
-                <p className="font-semibold text-slate-100">Método actual:</p>
-                <p className="mt-2 text-sm text-slate-300">{selectedPayment === 'efectivo' ? 'EFECTIVO' : selectedPayment === 'nequi' ? 'NEQUI / TRANSFERENCIA' : 'DATÁFONO / TARJETA'}</p>
+
+            {cart.length === 0 ? (
+              <p className="mt-6 text-center text-sm text-[#475569]">
+                Toca un producto para agregarlo a la venta.
+              </p>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {cart.map((item) => (
+                  <div key={item.product.id} className="flex items-center justify-between gap-2 rounded-xl border border-[#E2E8F0] p-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold">{item.product.name}</p>
+                      <p className="text-xs text-[#475569]">{formatCOP(item.product.price)} c/u</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => updateQuantity(item.product.id, -1)}
+                        className="flex h-7 w-7 items-center justify-center rounded-full border border-[#E2E8F0] text-sm font-bold text-[#475569] hover:border-[#9333EA]/40"
+                      >
+                        −
+                      </button>
+                      <span className="w-5 text-center text-sm font-semibold">{item.quantity}</span>
+                      <button
+                        onClick={() => updateQuantity(item.product.id, 1)}
+                        disabled={item.quantity >= item.product.stock}
+                        className="flex h-7 w-7 items-center justify-center rounded-full border border-[#E2E8F0] text-sm font-bold text-[#475569] hover:border-[#9333EA]/40 disabled:opacity-30"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => removeFromCart(item.product.id)}
+                      className="text-[#475569] hover:text-[#DC2626]"
+                      aria-label={`Quitar ${item.product.name}`}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="mt-6 space-y-2 border-t border-[#E2E8F0] pt-4">
+              <div className="flex justify-between text-sm text-[#475569]">
+                <span>Unidades</span>
+                <span>{totalUnidades}</span>
+              </div>
+              <div className="flex justify-between text-lg font-bold">
+                <span>Total</span>
+                <span>{formatCOP(total)}</span>
               </div>
             </div>
           </div>
 
-          {message ? (
-            <div className="rounded-3xl border border-cyan-500/20 bg-cyan-500/10 p-4 text-sm text-cyan-100">
-              {message}
+          <div className="rounded-[2rem] border border-[#E2E8F0] bg-white p-6 shadow-xl shadow-[rgba(37,99,235,0.08)]">
+            <h3 className="text-sm font-bold uppercase tracking-wide text-[#0F172A]">Método de pago</h3>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {PAYMENT_METHODS.map((method) => (
+                <button
+                  key={method.value}
+                  onClick={() => setPaymentMethod(method.value)}
+                  className={`flex flex-col items-center gap-1 rounded-xl border px-2 py-3 text-xs font-semibold transition ${paymentMethod === method.value
+                    ? 'border-transparent bg-gradient-to-r from-[#2563EB] via-[#9333EA] to-[#DC2626] text-white shadow-md'
+                    : 'border-[#E2E8F0] text-[#475569] hover:border-[#9333EA]/40'
+                    }`}
+                >
+                  <span className="text-lg">{method.icon}</span>
+                  {method.label}
+                </button>
+              ))}
             </div>
-          ) : null}
 
-          <button
-            type="button"
-            onClick={finalizePurchase}
-            disabled={isProcessing || ticket.length === 0}
-            className="mt-auto rounded-[2rem] bg-gradient-to-r from-cyan-400 via-blue-500 to-red-500 px-6 py-6 text-lg font-bold uppercase text-slate-950 shadow-[0_0_30px_rgba(59,130,246,0.35)] transition active:scale-[0.98] active:shadow-[0_0_15px_rgba(239,68,68,0.45)] disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {isProcessing ? 'Procesando compra...' : 'FINALIZAR COMPRA'}
-          </button>
+            {error ? (
+              <div className="mt-4 rounded-xl border border-[#DC2626]/20 bg-[#DC2626]/5 px-4 py-3 text-sm text-[#DC2626]">
+                {error}
+              </div>
+            ) : null}
+
+            {success ? (
+              <div className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3 text-sm text-emerald-700">
+                {success}
+              </div>
+            ) : null}
+
+            <button
+              onClick={confirmarVenta}
+              disabled={cart.length === 0 || loading}
+              className="mt-4 w-full rounded-2xl bg-gradient-to-r from-[#2563EB] via-[#9333EA] to-[#DC2626] px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {loading ? 'Procesando...' : `Confirmar venta · ${formatCOP(total)}`}
+            </button>
+          </div>
         </aside>
       </div>
     </main>
