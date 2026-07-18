@@ -1,0 +1,13 @@
+2026-07-18 23:05:31 | WARN | usuario=awo@gmail.com | modulo=auth | accion=login_failed | Failed login attempt: Invalid credentials
+2026-07-18 23:05:42 | WARN | usuario=sadar@gmail.com | modulo=auth | accion=login_failed | Failed login attempt: Invalid credentials
+2026-07-18 23:06:20 | INFO | usuario=admin1@gmail.com | modulo=auth | accion=login_success | User logged in successfully
+2026-07-18 23:07:18 | INFO | usuario=admin1@gmail.com | modulo=auth | accion=login_success | User logged in successfully
+2026-07-18 23:12:21 | INFO | usuario=admin1@gmail.com | modulo=auth | accion=login_success | User logged in successfully
+2026-07-18 23:14:59 | INFO | usuario=user3@gmail.com | modulo=auth | accion=login_success | User logged in successfully
+2026-07-18 23:18:40 | INFO | usuario=admin1@gmail.com | modulo=auth | accion=login_success | User logged in successfully
+2026-07-18 23:19:23 | INFO | usuario=admin1@gmail.com | modulo=auth | accion=login_success | User logged in successfully
+2026-07-18 23:20:28 | INFO | usuario=user3@gmail.com | modulo=auth | accion=login_success | User logged in successfully
+2026-07-18 23:21:41 | WARN | usuario=error@gmail.com | modulo=auth | accion=login_failed | Failed login attempt: Invalid credentials
+2026-07-18 23:22:36 | INFO | usuario=admin1@gmail.com | modulo=auth | accion=login_success | User logged in successfully
+2026-07-18 23:37:16 | INFO | usuario=admin1@gmail.com | modulo=auth | accion=login_success | User logged in successfully
+2026-07-18 23:39:01 | WARN | usuario=juan@gmail.com | modulo=auth | accion=login_failed | Failed login attempt: Invalid credentials

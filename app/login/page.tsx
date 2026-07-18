@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
+import { logAuthEvent } from './actions'
 
 function getSupabaseClient() {
   return createBrowserClient(
@@ -32,6 +33,7 @@ export default function LoginPage() {
     })
 
     if (signInError || !data.user) {
+      void logAuthEvent(email, false, 'Invalid credentials')
       setError('Usuario o contraseña incorrectos.')
       setLoading(false)
       return
@@ -45,22 +47,26 @@ export default function LoginPage() {
       .single()
 
     if (profileError || !profile) {
+      void logAuthEvent(email, false, 'No role assigned in profiles table')
       setError('Tu cuenta no tiene un rol asignado. Contacta al administrador.')
       setLoading(false)
       return
     }
 
     if (profile.role === 'admin') {
+      void logAuthEvent(email, true)
       router.replace('/admin')
+      return
     } else if (profile.role === 'pos') {
+      void logAuthEvent(email, true)
       router.replace('/pos')
+      return
     } else {
-      setError('Tu cuenta no tiene un rol asignado. Contacta al administrador.')
+      void logAuthEvent(email, false, `Role ${profile.role} is not allowed to login here`)
+      setError('Tu cuenta no tiene un rol asignado válido. Contacta al administrador.')
       setLoading(false)
       return
     }
-
-    router.refresh()
   }
 
   return (

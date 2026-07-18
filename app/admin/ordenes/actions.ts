@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/logger'
 
 export async function getAdminOrders() {
   try {
@@ -11,9 +12,13 @@ export async function getAdminOrders() {
       .order('created_at', { ascending: false })
 
     if (error) throw new Error(error.message)
+    
+    // Opcional: logear acceso a ordenes
+    // logger.info({ domain: 'orders', action: 'fetch_all', message: 'Admin fetched all orders' })
+    
     return data
   } catch (error) {
-    console.error('Error fetching admin orders:', error)
+    logger.error({ domain: 'db', action: 'fetch_orders', message: 'Failed to fetch admin orders', error })
     return []
   }
 }
@@ -27,9 +32,12 @@ export async function updateOrderStatus(id: string, status: string) {
       .eq('id', id)
 
     if (error) throw new Error(error.message)
+    
+    logger.info({ domain: 'orders', action: 'update_status', message: `Order ${id} status updated to ${status}` })
     return { success: true }
   } catch (error: any) {
-    console.error('Error updating order status:', error)
-    return { success: false, error: error.message }
+    logger.error({ domain: 'orders', action: 'update_status_error', message: `Failed to update order ${id}`, error })
+    // No devolvemos el error técnico al frontend (RNF-14, Req 5)
+    return { success: false, error: 'No se pudo actualizar el estado del pedido. Inténtelo más tarde.' }
   }
 }

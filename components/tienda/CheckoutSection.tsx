@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useCart } from '@/lib/store/cart'
 import { formatCurrency } from '@/lib/utils/formatters'
 import { createBrowserClient } from '@supabase/ssr'
+import { logClientEvent } from '@/lib/logger/actions'
 
 const paymentMethods = [
   {
@@ -109,11 +110,13 @@ export function CheckoutSection() {
     })
 
     if (rpcError) {
+      void logClientEvent('error', 'orders', 'create_order_failed', 'Checkout RPC failed', { items, paymentMethod: mappedPayment }, name, rpcError.message)
       setErrorMessage(rpcError.message || 'Error al guardar el pedido. Intenta de nuevo.')
       setIsSavingOrder(false)
       return
     }
 
+    void logClientEvent('info', 'orders', 'create_order_success', 'Order created successfully via Checkout', { itemsCount: items.length, paymentMethod: mappedPayment, total }, name)
     setIsOrderSaved(true)
     setIsSavingOrder(false)
   }
