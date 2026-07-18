@@ -4,6 +4,7 @@ import { FormEvent, useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/lib/store/cart'
 import { formatCurrency } from '@/lib/utils/formatters'
+import { createBrowserClient } from '@supabase/ssr'
 
 const paymentMethods = [
   {
@@ -29,7 +30,7 @@ const paymentMethods = [
 type PaymentMethodValue = 'nequi' | 'lulo' | 'cash'
 
 export function CheckoutSection() {
-  const { cart, total } = useCart()
+  const { cart, total, clearCart } = useCart()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [address, setAddress] = useState('')
@@ -38,6 +39,8 @@ export function CheckoutSection() {
   const [errorMessage, setErrorMessage] = useState('')
   const [fieldErrors, setFieldErrors] = useState({ name: false, phone: false, address: false })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isOrderSaved, setIsOrderSaved] = useState(false)
+  const [isSavingOrder, setIsSavingOrder] = useState(false)
 
   const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '573137175806'
 
@@ -67,7 +70,7 @@ export function CheckoutSection() {
     setPhone(digitsOnly)
   }
 
-  const submitCheckout = () => {
+  const handleSaveOrder = async () => {
     const errors = {
       name: !name.trim(),
       phone: !phone.trim(),
@@ -86,12 +89,49 @@ export function CheckoutSection() {
     }
 
     setErrorMessage('')
+    setIsSavingOrder(true)
+
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    const items = cart.map((item) => ({
+      product_id: item.id,
+      quantity: item.quantity,
+    }))
+
+    const mappedPayment = paymentMethod === 'cash' ? 'efectivo' : 'transferencia'
+
+    const { error: rpcError } = await supabase.rpc('process_pos_sale', {
+      p_items: items,
+      p_payment_method: mappedPayment,
+    })
+
+    if (rpcError) {
+      setErrorMessage(rpcError.message || 'Error al guardar el pedido. Intenta de nuevo.')
+      setIsSavingOrder(false)
+      return
+    }
+
+    setIsOrderSaved(true)
+    setIsSavingOrder(false)
+  }
+
+  const submitCheckout = () => {
+    if (!isOrderSaved) {
+      setErrorMessage('Debes guardar el pedido primero.')
+      return
+    }
+
+    setErrorMessage('')
     setIsSubmitting(true)
 
     const message = encodeURIComponent(buildMessage())
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${message}`
     window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
     setIsSubmitting(false)
+    clearCart()
   }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -307,12 +347,32 @@ export function CheckoutSection() {
               </div>
             ) : null}
 
+            {isOrderSaved && (
+              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-sm text-emerald-700">
+                ✅ Pedido guardado y stock actualizado. Ya puedes enviarlo por WhatsApp.
+              </div>
+            )}
+
+            {!isOrderSaved ? (
+              <button
+                type="button"
+                onClick={handleSaveOrder}
+                disabled={isSavingOrder}
+                className={`w-full rounded-2xl bg-[#0F172A] px-6 py-4 text-base font-bold tracking-wide text-white shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] ${
+                  isSavingOrder ? 'opacity-70' : ''
+                }`}
+              >
+                {isSavingOrder ? 'GUARDANDO PEDIDO...' : 'GUARDAR PEDIDO'}
+              </button>
+            ) : null}
+
             <button
               type="button"
               onClick={submitCheckout}
-              disabled={isSubmitting}
-              className={`w-full rounded-2xl bg-gradient-to-r from-[#2563EB] via-[#9333EA] to-[#DC2626] bg-[length:200%_100%] bg-[position:0%_0%] px-6 py-4 text-base font-bold tracking-wide text-white shadow-lg shadow-[rgba(147,51,234,0.08)] transition-all duration-300 hover:scale-[1.02] hover:bg-[position:100%_0%] active:scale-[0.98] ${isSubmitting ? 'opacity-70' : ''
-                }`}
+              disabled={isSubmitting || !isOrderSaved}
+              className={`w-full rounded-2xl bg-gradient-to-r from-[#2563EB] via-[#9333EA] to-[#DC2626] bg-[length:200%_100%] bg-[position:0%_0%] px-6 py-4 text-base font-bold tracking-wide text-white shadow-lg shadow-[rgba(147,51,234,0.08)] transition-all duration-300 hover:scale-[1.02] hover:bg-[position:100%_0%] active:scale-[0.98] ${
+                isSubmitting || !isOrderSaved ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
               {isSubmitting ? 'Generando pedido...' : 'FINALIZAR PEDIDO EN WHATSAPP'}
             </button>

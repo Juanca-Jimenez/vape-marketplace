@@ -1,7 +1,8 @@
-import Link from 'next/link'
 import { Filtros } from '@/components/tienda/Filtros'
 import { ProductCard, type Product } from '@/components/tienda/ProductCard'
 import { createClient } from '@/lib/supabase/server'
+
+
 
 interface SearchParams {
   marca?: string
@@ -162,37 +163,7 @@ export default async function TiendaPage({ searchParams }: { searchParams: Promi
           </div>
         </div>
 
-        {/* Newsletter */}
-        <div className="border-b border-[#E2E8F0]">
-          <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-            <div className="rounded-3xl border border-[#E2E8F0] bg-gradient-to-br from-white to-[#F8FAFC] p-8 shadow-sm">
-              <div className="flex flex-col items-center justify-between gap-6 lg:flex-row">
-                <div>
-                  <h3 className="text-2xl font-bold text-[#0F172A]">
-                    Recibe ofertas y nuevos lanzamientos
-                  </h3>
-                  <p className="mt-2 text-sm text-[#475569]">
-                    Suscríbete para obtener promociones exclusivas y novedades.
-                  </p>
-                </div>
 
-                <form className="flex w-full max-w-md gap-2">
-                  <input
-                    type="email"
-                    placeholder="correo@ejemplo.com"
-                    className="flex-1 rounded-2xl border border-[#E2E8F0] px-4 py-3 text-sm outline-none focus:border-transparent focus:shadow-[0_0_0_3px_rgba(147,51,234,0.15)]"
-                  />
-                  <button
-                    type="submit"
-                    className="rounded-2xl bg-gradient-to-r from-[#2563EB] via-[#9333EA] to-[#DC2626] px-5 py-3 text-sm font-semibold text-white transition hover:scale-105"
-                  >
-                    Suscribirme
-                  </button>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Footer principal */}
         <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
@@ -200,7 +171,11 @@ export default async function TiendaPage({ searchParams }: { searchParams: Promi
 
             {/* Marca */}
             <div className="lg:col-span-2">
-              <img src="/logo.png" alt="The V Society" className="h-12 object-contain" />
+              <img
+                src="/logo.png"
+                alt="The V Society"
+                className="h-28 w-auto max-w-[220px] object-contain"
+              />
 
               <p className="mt-4 max-w-md text-sm leading-relaxed text-[#475569]">
                 Marketplace especializado en productos de vapeo originales.
@@ -210,15 +185,15 @@ export default async function TiendaPage({ searchParams }: { searchParams: Promi
 
               <div className="mt-6 flex flex-wrap gap-3">
                 <span className="rounded-full bg-[#F8FAFC] px-3 py-2 text-xs font-medium text-[#475569]">
-                  🚚 Envíos Nacionales
+                  Envíos Nacionales
                 </span>
 
                 <span className="rounded-full bg-[#F8FAFC] px-3 py-2 text-xs font-medium text-[#475569]">
-                  ✅ Productos Originales
+                  Productos Originales
                 </span>
 
                 <span className="rounded-full bg-[#F8FAFC] px-3 py-2 text-xs font-medium text-[#475569]">
-                  💳 Pago Seguro
+                  Pago Seguro
                 </span>
               </div>
             </div>
@@ -230,10 +205,10 @@ export default async function TiendaPage({ searchParams }: { searchParams: Promi
               </h3>
 
               <ul className="mt-4 space-y-3 text-sm text-[#475569]">
-                <li><Link href="/tienda">Catálogo</Link></li>
-                <li><Link href="/carrito">Carrito</Link></li>
-                <li><Link href="/tienda?tipo=Desechable">Desechables</Link></li>
-                <li><Link href="/tienda?tipo=Pod%20recargable">Pods</Link></li>
+                <li><a href="/tienda">Catálogo</a></li>
+                <li><a href="/carrito">Carrito</a></li>
+                <li><a href="/tienda?tipo=Desechable">Desechables</a></li>
+                <li><a href="/tienda?tipo=Pod%20recargable">Pods</a></li>
               </ul>
             </div>
 
@@ -244,10 +219,10 @@ export default async function TiendaPage({ searchParams }: { searchParams: Promi
               </h3>
 
               <div className="mt-4 space-y-3 text-sm text-[#475569]">
-                <p>📞 +57 313 717 5806</p>
-                <p>📧 contacto@thevsociety.com</p>
-                <p>🕐 Lun - Sáb: 9:00 a.m. – 8:00 p.m.</p>
-                <p>📍 Colombia</p>
+                <p>📱 +57 313 717 5806</p>
+                <p>✉️ contacto@thevsociety.com</p>
+                <p>🕘 Lun - Sáb: 9:00 a.m. – 8:00 p.m.</p>
+                <p>🇨🇴 Colombia</p>
 
                 <a
                   href="https://wa.me/573137175806"

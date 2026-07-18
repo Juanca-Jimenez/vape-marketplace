@@ -48,25 +48,25 @@ export default function AdminSidebar({ userEmail }: AdminSidebarProps) {
     exact ? pathname === href : pathname === href || pathname.startsWith(href + '/')
 
   return (
-    <aside className="flex w-60 flex-col border-r border-zinc-800 bg-zinc-900">
+    <aside className="flex w-60 flex-col border-r border-[#E2E8F0] bg-white">
       {/* Header */}
-      <div className="border-b border-zinc-800 p-6">
+      <div className="border-b border-[#E2E8F0] p-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/10">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-[#2563EB] via-[#9333EA] to-[#DC2626] text-white shadow-md">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
             </svg>
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-white">Panel Admin</p>
-            <p className="truncate text-xs text-zinc-500">{userEmail}</p>
+            <p className="text-sm font-bold text-[#0F172A]">Panel Admin</p>
+            <p className="truncate text-xs text-[#475569]">{userEmail}</p>
           </div>
         </div>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 p-4">
-        <p className="mb-3 px-2 text-xs font-semibold uppercase tracking-widest text-zinc-600">
+        <p className="mb-3 px-2 text-xs font-semibold uppercase tracking-widest text-[#94A3B8]">
           Navegación
         </p>
         {navLinks.map((link) => {
@@ -75,16 +75,15 @@ export default function AdminSidebar({ userEmail }: AdminSidebarProps) {
             <Link
               key={link.href}
               href={link.href}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
-                active
-                  ? 'bg-emerald-500/15 text-emerald-300 shadow-sm'
-                  : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
-              }`}
+              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-150 ${active
+                  ? 'bg-gradient-to-r from-[#2563EB] via-[#9333EA] to-[#DC2626] text-white shadow-md'
+                  : 'text-[#475569] hover:bg-[#F8FAFC] hover:text-[#0F172A]'
+                }`}
             >
-              <span className={active ? 'text-emerald-400' : 'text-zinc-500'}>{link.icon}</span>
+              <span className={active ? 'text-white' : 'text-[#94A3B8]'}>{link.icon}</span>
               {link.label}
               {active && (
-                <span className="ml-auto h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                <span className="ml-auto h-1.5 w-1.5 rounded-full bg-white" />
               )}
             </Link>
           )
@@ -92,7 +91,7 @@ export default function AdminSidebar({ userEmail }: AdminSidebarProps) {
       </nav>
 
       {/* Footer / Sign out */}
-      <div className="border-t border-zinc-800 p-4">
+      <div className="border-t border-[#E2E8F0] p-4">
         <LogoutButton />
       </div>
     </aside>

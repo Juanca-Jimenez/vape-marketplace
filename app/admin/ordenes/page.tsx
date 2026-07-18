@@ -1,40 +1,42 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils/formatters'
+import { getAdminOrders, updateOrderStatus } from './actions'
 
 interface OrderItem {
   id: string
+  user_id?: string
   status: string
   total: number
+  address?: string
   created_at: string
-  customer_name?: string
-  customer_email?: string
+  payment_method?: string
+  source?: string
 }
 
 const STATUS_OPTIONS = [
   { value: 'pending_payment', label: 'Pago pendiente' },
-  { value: 'verifying',       label: 'Verificando' },
-  { value: 'paid',            label: 'Pagado' },
-  { value: 'shipped',         label: 'Enviado' },
-  { value: 'delivered',       label: 'Entregado' },
+  { value: 'verifying', label: 'Verificando' },
+  { value: 'paid', label: 'Pagado' },
+  { value: 'shipped', label: 'Enviado' },
+  { value: 'delivered', label: 'Entregado' },
 ]
 
 const STATUS_COLORS: Record<string, string> = {
-  pending_payment: 'bg-yellow-500/15 text-yellow-300 border-yellow-500/30',
-  verifying:       'bg-blue-500/15 text-blue-300 border-blue-500/30',
-  paid:            'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-  shipped:         'bg-purple-500/15 text-purple-300 border-purple-500/30',
-  delivered:       'bg-green-500/15 text-green-300 border-green-500/30',
+  pending_payment: 'bg-yellow-500/10 text-yellow-700 border-yellow-500/20',
+  verifying: 'bg-blue-500/10 text-blue-700 border-blue-500/20',
+  paid: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20',
+  shipped: 'bg-purple-500/10 text-purple-700 border-purple-500/20',
+  delivered: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20',
 }
 
 function StatusBadge({ status }: { status: string }) {
   const found = STATUS_OPTIONS.find((s) => s.value === status)
   const label = found?.label ?? status
-  const colors = STATUS_COLORS[status] ?? 'bg-zinc-700/60 text-zinc-300 border-zinc-600'
+  const colors = STATUS_COLORS[status] ?? 'bg-[#F8FAFC] text-[#475569] border-[#E2E8F0]'
   return (
-    <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${colors}`}>
+    <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${colors}`}>
       {label}
     </span>
   )
@@ -46,13 +48,7 @@ export default function AdminOrdersPage() {
   const [updating, setUpdating] = useState<string | null>(null)
 
   const loadOrders = async () => {
-    const supabase = createClient()
-    if (!supabase) return
-
-    const { data } = await supabase
-      .from('orders')
-      .select('id, status, total, created_at, customer_name, customer_email')
-      .order('created_at', { ascending: false })
+    const data = await getAdminOrders()
     setOrders((data ?? []) as OrderItem[])
     setLoading(false)
   }
@@ -61,60 +57,62 @@ export default function AdminOrdersPage() {
     void loadOrders()
   }, [])
 
-  const updateStatus = async (id: string, status: string) => {
+  const handleUpdateStatus = async (id: string, status: string) => {
     setUpdating(id)
-    const supabase = createClient()
-    if (!supabase) { setUpdating(null); return }
+    const result = await updateOrderStatus(id, status)
 
-    await supabase.from('orders').update({ status }).eq('id', id)
-    setOrders((current) =>
-      current.map((order) => (order.id === id ? { ...order, status } : order))
-    )
+    if (result.success) {
+      setOrders((current) =>
+        current.map((order) => (order.id === id ? { ...order, status } : order))
+      )
+    } else {
+      alert('Error actualizando la orden: ' + result.error)
+    }
     setUpdating(null)
   }
 
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-semibold text-white">Órdenes</h1>
-        <p className="mt-2 text-sm text-zinc-400">Administra y actualiza el estado de los pedidos.</p>
+        <h1 className="text-3xl font-semibold text-[#0F172A]">Órdenes</h1>
+        <p className="mt-2 text-sm text-[#475569]">Administra y actualiza el estado de los pedidos.</p>
       </div>
 
-      <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900">
+      <div className="overflow-hidden rounded-[2rem] border border-[#E2E8F0] bg-white shadow-xl shadow-[rgba(37,99,235,0.06)]">
         {loading ? (
-          <div className="flex items-center justify-center p-12 text-zinc-400">
-            <svg className="mr-3 h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+          <div className="flex items-center justify-center p-12 text-[#94A3B8]">
+            <svg className="mr-3 h-5 w-5 animate-spin text-[#2563EB]" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
             Cargando órdenes...
           </div>
         ) : orders.length === 0 ? (
-          <div className="p-10 text-center text-sm text-zinc-500">Aún no hay órdenes registradas.</div>
+          <div className="p-10 text-center text-sm text-[#475569]">Aún no hay órdenes registradas.</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm text-zinc-300">
-              <thead className="border-b border-zinc-800 bg-zinc-800/60 text-xs uppercase tracking-wider text-zinc-500">
+            <table className="min-w-full text-left text-sm text-[#0F172A]">
+              <thead className="border-b border-[#E2E8F0] bg-[#F8FAFC] text-xs font-bold uppercase tracking-wider text-[#475569]">
                 <tr>
-                  <th className="px-5 py-3">ID</th>
-                  <th className="px-5 py-3">Cliente</th>
-                  <th className="px-5 py-3">Fecha</th>
-                  <th className="px-5 py-3">Total</th>
-                  <th className="px-5 py-3">Estado actual</th>
-                  <th className="px-5 py-3">Cambiar estado</th>
+                  <th className="px-5 py-4">ID</th>
+                  <th className="px-5 py-4">Dirección / Método</th>
+                  <th className="px-5 py-4">Fecha</th>
+                  <th className="px-5 py-4">Total</th>
+                  <th className="px-5 py-4">Estado actual</th>
+                  <th className="px-5 py-4">Cambiar estado</th>
                 </tr>
               </thead>
               <tbody>
                 {orders.map((order) => (
-                  <tr key={order.id} className="border-t border-zinc-800/60 transition hover:bg-zinc-800/30">
-                    <td className="px-5 py-4 font-mono text-xs text-zinc-500">
+                  <tr key={order.id} className="border-t border-[#E2E8F0] transition hover:bg-[#F8FAFC]/50">
+                    <td className="px-5 py-4 font-mono text-xs text-[#64748B]">
                       #{order.id.slice(0, 8).toUpperCase()}
                     </td>
                     <td className="px-5 py-4">
-                      <p className="font-medium text-white">{order.customer_name || '—'}</p>
-                      <p className="text-xs text-zinc-500">{order.customer_email || ''}</p>
+                      <p className="font-semibold text-[#0F172A]">{order.address || '—'}</p>
+                      <p className="text-xs text-[#64748B]">{order.payment_method ? `Pago: ${order.payment_method}` : ''}</p>
                     </td>
-                    <td className="px-5 py-4 text-zinc-400">
+                    <td className="px-5 py-4 text-[#64748B]">
                       {new Date(order.created_at).toLocaleDateString('es-CO', {
                         day: '2-digit',
                         month: 'short',
@@ -123,19 +121,19 @@ export default function AdminOrdersPage() {
                         minute: '2-digit',
                       })}
                     </td>
-                    <td className="px-5 py-4 font-semibold text-white">
+                    <td className="px-5 py-4 font-bold text-[#0F172A]">
                       {formatCurrency(Number(order.total))}
                     </td>
                     <td className="px-5 py-4">
                       <StatusBadge status={order.status} />
                     </td>
                     <td className="px-5 py-4">
-                      <div className="relative">
+                      <div className="relative w-40">
                         <select
                           value={order.status}
-                          onChange={(event) => void updateStatus(order.id, event.target.value)}
+                          onChange={(event) => void handleUpdateStatus(order.id, event.target.value)}
                           disabled={updating === order.id}
-                          className="w-full appearance-none rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 pr-8 text-xs text-white outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 disabled:opacity-50"
+                          className="w-full appearance-none rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 pr-8 text-xs font-medium text-[#0F172A] outline-none transition focus:border-transparent focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)] disabled:opacity-50"
                         >
                           {STATUS_OPTIONS.map((opt) => (
                             <option key={opt.value} value={opt.value}>
@@ -144,12 +142,12 @@ export default function AdminOrdersPage() {
                           ))}
                         </select>
                         {updating === order.id ? (
-                          <svg className="absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 animate-spin text-emerald-400" fill="none" viewBox="0 0 24 24">
+                          <svg className="absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 animate-spin text-[#2563EB]" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                           </svg>
                         ) : (
-                          <svg className="pointer-events-none absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <svg className="pointer-events-none absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 text-[#94A3B8]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                           </svg>
                         )}
