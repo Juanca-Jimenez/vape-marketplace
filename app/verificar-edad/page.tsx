@@ -1,86 +1,128 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 export default function VerificarEdadPage() {
   const router = useRouter()
-  const [aceptado, setAceptado] = useState(false)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [birthDate, setBirthDate] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  async function handleVerificar() {
-    if (!aceptado) {
-      setError('Debes confirmar que eres mayor de 18 años.')
+  useEffect(() => {
+    const hasAgeCookie = document.cookie.split(';').some((c) => c.trim().startsWith('age_verified=true'))
+    if (hasAgeCookie) {
+      router.replace('/tienda')
+    }
+  }, [router])
+
+  const isAdult = (dateStr: string): boolean => {
+    const parts = dateStr.split('-')
+    if (parts.length !== 3) return false
+    const birthYear = parseInt(parts[0], 10)
+    const birthMonth = parseInt(parts[1], 10) - 1 // 0-indexed en JS
+    const birthDay = parseInt(parts[2], 10)
+
+    const today = new Date()
+    const currentYear = today.getFullYear()
+    const currentMonth = today.getMonth()
+    const currentDay = today.getDate()
+
+    let age = currentYear - birthYear
+    if (currentMonth < birthMonth || (currentMonth === birthMonth && currentDay < birthDay)) {
+      age--
+    }
+    return age >= 18
+  }
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    setError(null)
+
+    if (!birthDate) {
+      setError('Por favor, ingresa tu fecha de nacimiento.')
       return
     }
 
-    setLoading(true)
+    if (!isAdult(birthDate)) {
+      setError('Lo sentimos, debes ser mayor de 18 años para acceder.')
+      return
+    }
 
-    // Guarda el registro en Supabase
-    const supabase = createClient()
-    await supabase.from('age_verifications').insert({
-      session_id: crypto.randomUUID(),
-      ip_address: null,
-    })
+    setIsLoading(true)
 
-    // Setea la cookie por 24 horas
-    document.cookie = `age_verified=true; path=/; max-age=${60 * 60 * 24}; SameSite=Strict`
+    // Set cookie first — this is what the middleware checks
+    // Removing max-age makes it a session cookie, valid only for the current session.
+    document.cookie = 'age_verified=true; path=/; SameSite=Lax'
+    sessionStorage.setItem('age_verified', 'true')
+    localStorage.removeItem('age_verified') // cleanup old localStorage if present
 
-    router.push('/tienda')
+    // Fire-and-forget Supabase insert (don't block redirect on this)
+    try {
+      const supabase = createClient()
+      if (supabase) {
+        void supabase.from('age_verifications').insert({
+          session_id: crypto.randomUUID(),
+          birth_date: birthDate,
+        })
+      }
+    } catch {
+      // non-blocking
+    }
+
+    // Redirect immediately after setting cookie
+    window.location.assign('/home')
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-black px-4">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 max-w-md w-full text-center">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#0B1120] px-4 py-12">
+      {/* Glow background effect */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-tr from-purple-600 via-pink-600 to-red-600 opacity-20 blur-[130px]" />
 
-        <div className="text-5xl mb-4">🔞</div>
+      <div className="relative z-10 w-full max-w-md">
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl">
+          <div className="mb-8 text-center">
+            <div className="mb-4 text-5xl">🔞</div>
+            <h1 className="mb-2 text-2xl font-bold text-white">Verificación de Edad</h1>
+            <p className="text-sm text-slate-300">Debes ser mayor de 18 años para acceder a este sitio.</p>
+          </div>
 
-        <h1 className="text-white text-2xl font-bold mb-2">
-          Verificación de edad
-        </h1>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label htmlFor="birthDate" className="mb-2 block text-sm font-medium text-slate-200">
+                Fecha de Nacimiento
+              </label>
+              <input
+                id="birthDate"
+                type="date"
+                value={birthDate}
+                onChange={(e) => { setBirthDate(e.target.value); setError(null) }}
+                disabled={isLoading}
+                max={new Date().toISOString().split('T')[0]}
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </div>
 
-        <p className="text-zinc-400 text-sm mb-6">
-          Este sitio vende productos de vapeo. El acceso está
-          restringido a mayores de 18 años.
-        </p>
+            {error && (
+              <div className="rounded-xl border border-red-500/50 bg-red-500/10 p-4">
+                <p className="text-sm font-medium text-red-200">{error}</p>
+              </div>
+            )}
 
-        <label className="flex items-start gap-3 text-left cursor-pointer mb-6">
-          <input
-            type="checkbox"
-            checked={aceptado}
-            onChange={(e) => {
-              setAceptado(e.target.checked)
-              setError('')
-            }}
-            className="mt-1 accent-white w-4 h-4 flex-shrink-0"
-          />
-          <span className="text-zinc-300 text-sm">
-            Confirmo que tengo 18 años o más y acepto los{' '}
-            <a href="/terminos" className="underline text-white">
-              términos y condiciones
-            </a>
-            .
-          </span>
-        </label>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full rounded-xl bg-gradient-to-r from-red-500 to-red-900  py-3.5 font-semibold text-white shadow-lg shadow-pink-500/25 transition-all hover:scale-[1.02] hover:shadow-pink-500/40 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+            >
+              {isLoading ? 'Redirigiendo...' : 'Verificar Edad'}
+            </button>
+          </form>
 
-        {error && (
-          <p className="text-red-400 text-sm mb-4">{error}</p>
-        )}
-
-        <button
-          onClick={handleVerificar}
-          disabled={loading}
-          className="w-full bg-white text-black font-semibold py-3 rounded-xl hover:bg-zinc-200 transition disabled:opacity-50"
-        >
-          {loading ? 'Verificando...' : 'Tengo 18 años o más — Entrar'}
-        </button>
-
-        <p className="text-zinc-600 text-xs mt-6">
-          Al ingresar confirmas tu mayoría de edad bajo la legislación colombiana.
-        </p>
-
+          <p className="mt-6 text-center text-xs text-slate-400">
+            Al continuar confirmas tu mayoría de edad bajo la legislación local.
+          </p>
+        </div>
       </div>
     </main>
   )
