@@ -8,7 +8,7 @@ function normalizeSupabaseUrl(url: string | undefined): string {
   return url.trim().replace(/\/+$/, '').replace(/\/rest\/v1$/i, '')
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Skip static assets and API routes
