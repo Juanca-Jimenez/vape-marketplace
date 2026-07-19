@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ProductForm, type ProductFormData } from '@/components/admin/ProductForm'
+import { logProductEvent } from '../actions'
 
 export default function NewProductPage() {
   const router = useRouter()
@@ -16,7 +17,8 @@ export default function NewProductPage() {
 
     const supabase = createClient()
     if (!supabase) {
-      setError('Error al guardar. Intenta de nuevo.')
+      void logProductEvent('create_product', data.name, false, 'No Supabase client available')
+      setError('Error interno al inicializar conexión. Intenta de nuevo.')
       setLoading(false)
       return
     }
@@ -26,9 +28,11 @@ export default function NewProductPage() {
     if (imageFile) {
       const filePath = `products/${Date.now()}-${imageFile.name}`
       const { error: uploadError } = await supabase.storage.from('product-images').upload(filePath, imageFile)
-      if (!uploadError) {
-        const { data } = supabase.storage.from('product-images').getPublicUrl(filePath)
-        publicUrl = data.publicUrl
+      if (uploadError) {
+        void logProductEvent('upload_product_image', data.name, false, uploadError.message)
+      } else {
+        const { data: publicData } = supabase.storage.from('product-images').getPublicUrl(filePath)
+        publicUrl = publicData.publicUrl
       }
     }
 
@@ -47,11 +51,13 @@ export default function NewProductPage() {
     })
 
     if (insertError) {
-      setError('Error al guardar. Intenta de nuevo.')
+      void logProductEvent('create_product', data.name, false, insertError.message)
+      setError('No se pudo guardar el producto. Verifica los datos e intenta de nuevo.')
       setLoading(false)
       return
     }
 
+    void logProductEvent('create_product', data.name, true)
     router.push('/admin/productos')
   }
 

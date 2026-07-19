@@ -1,0 +1,1 @@
+2026-07-19 02:35:44 | INFO | usuario=q | modulo=orders | accion=create_order_success | Order created successfully via Checkout | {"itemsCount":1,"paymentMethod":"transferencia","total":40000}
