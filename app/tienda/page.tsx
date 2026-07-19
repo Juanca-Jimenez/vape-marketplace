@@ -1,8 +1,7 @@
 import { Filtros } from '@/components/tienda/Filtros'
 import { ProductCard, type Product } from '@/components/tienda/ProductCard'
 import { createClient } from '@/lib/supabase/server'
-
-
+import { unstable_cache } from 'next/cache'
 
 interface SearchParams {
   marca?: string
@@ -71,30 +70,71 @@ export default async function TiendaPage({ searchParams }: { searchParams: Promi
     )
   }
 
-  let query = supabase.from('products').select('*').eq('is_active', true).order('name', { ascending: true })
+  // ── CACHÉ: productos base sin filtros (equivalente a Flask-Caching)
+  // Se revalida cada 60 segundos — reduce llamadas a Supabase
+  const getProductosBase = unstable_cache(
+    async () => {
+      console.time('[CACHE] carga-productos-base')
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('is_active', true)
+        .order('name', { ascending: true })
+      console.timeEnd('[CACHE] carga-productos-base')
 
-  if (marca) {
-    query = query.eq('brand', marca)
+      if (error) {
+        console.error('[ERROR-CATALOGO]', error.message, new Date().toISOString())
+      } else {
+        console.log('[CATALOGO-CARGADO]', `${data?.length ?? 0} productos`, new Date().toISOString())
+      }
+      return { data, error }
+    },
+    ['products-base'],
+    { revalidate: 60 }
+  )
+
+  // ── LOGGING: medir tiempo total con filtros aplicados
+  console.time('[QUERY] catalogo-con-filtros')
+
+  let productos: Product[] = []
+  let error = null
+
+  const hayFiltros = marca || sabor || tipo || buscar
+
+  if (hayFiltros) {
+    // Con filtros: query directa sin caché (resultados variables)
+    let query = supabase
+      .from('products')
+      .select('*')
+      .eq('is_active', true)
+      .order('name', { ascending: true })
+
+    if (marca) query = query.eq('brand', marca)
+    if (sabor) query = query.eq('flavor', sabor)
+    if (tipo) query = query.eq('type', tipo)
+    if (buscar) query = query.ilike('name', `%${buscar}%`)
+
+    const { data, error: queryError } = await query
+    productos = (data ?? []) as Product[]
+    error = queryError
+
+    if (queryError) {
+      console.error('[ERROR-FILTROS]', queryError.message, { marca, sabor, tipo, buscar })
+    } else {
+      console.log('[FILTROS-APLICADOS]', `${productos.length} resultados`, { marca, sabor, tipo, buscar })
+    }
+  } else {
+    // Sin filtros: usar caché
+    const { data, error: cacheError } = await getProductosBase()
+    productos = (data ?? []) as Product[]
+    error = cacheError
   }
 
-  if (sabor) {
-    query = query.eq('flavor', sabor)
-  }
+  console.timeEnd('[QUERY] catalogo-con-filtros')
 
-  if (tipo) {
-    query = query.eq('type', tipo)
-  }
-
-  if (buscar) {
-    query = query.ilike('name', `%${buscar}%`)
-  }
-
-  const { data: products, error } = await query
-  const productos = (products ?? []) as Product[]
-
-  const marcas = Array.from(new Set(productos.map((product) => product.brand).filter(Boolean))).sort()
-  const sabores = Array.from(new Set(productos.map((product) => product.flavor).filter(Boolean))).sort()
-  const tipos = Array.from(new Set(productos.map((product) => product.type).filter(Boolean))).sort()
+  const marcas = Array.from(new Set(productos.map((p) => p.brand).filter(Boolean))).sort()
+  const sabores = Array.from(new Set(productos.map((p) => p.flavor).filter(Boolean))).sort()
+  const tipos = Array.from(new Set(productos.map((p) => p.type).filter(Boolean))).sort()
 
   return (
     <>
