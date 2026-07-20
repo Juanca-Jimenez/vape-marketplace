@@ -1,5 +1,4 @@
 'use client'
-
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
@@ -24,6 +23,23 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
 
+    // ── RATE LIMITING: verificar antes de llamar a Supabase
+    try {
+      const rateLimitCheck = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rateLimitCheck: true }),
+      })
+      if (rateLimitCheck.status === 429) {
+        const data = await rateLimitCheck.json()
+        setError(data.error ?? 'Demasiados intentos. Espera 15 minutos antes de intentar de nuevo.')
+        setLoading(false)
+        return
+      }
+    } catch {
+      // Si falla la verificación continuar normalmente
+    }
+
     const supabase = getSupabaseClient()
 
     // 1. Login normal contra Supabase Auth
@@ -31,7 +47,6 @@ export default function LoginPage() {
       email: email.trim().toLowerCase(),
       password,
     })
-
     if (signInError || !data.user) {
       void logAuthEvent(email, false, 'Invalid credentials')
       setError('Usuario o contraseña incorrectos.')
@@ -45,14 +60,12 @@ export default function LoginPage() {
       .select('role')
       .eq('id', data.user.id)
       .single()
-
     if (profileError || !profile) {
       void logAuthEvent(email, false, 'No role assigned in profiles table')
       setError('Tu cuenta no tiene un rol asignado. Contacta al administrador.')
       setLoading(false)
       return
     }
-
     if (profile.role === 'admin') {
       void logAuthEvent(email, true)
       router.replace('/admin')
@@ -70,72 +83,86 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-zinc-950 px-4 py-12 text-slate-100">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-32 top-12 h-80 w-80 rounded-full bg-blue-500/10 blur-3xl" />
-        <div className="absolute -right-32 bottom-12 h-80 w-80 rounded-full bg-rose-500/10 blur-3xl" />
-      </div>
-      <div className="relative w-full max-w-md">
-        <div className="rounded-3xl border border-zinc-800 bg-[#030712]/95 p-8 shadow-2xl backdrop-blur-xl">
-          <div className="mb-6 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-400/10 text-cyan-200">
-              <span className="text-2xl">🔐</span>
+    <div className="min-h-screen bg-[#F8FAFC]">
+      <div className="mx-auto flex min-h-screen max-w-7xl items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md overflow-hidden rounded-[2rem] border border-[#E2E8F0] bg-white shadow-xl shadow-[rgba(37,99,235,0.08)]">
+
+          {/* Header */}
+          <div className="bg-gradient-to-r from-[#2563EB] via-[#9333EA] to-[#DC2626] px-8 py-8 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 text-3xl backdrop-blur">
+              🔐
             </div>
-            <h1 className="mt-6 text-2xl font-semibold text-white">Inicio de sesión (USUARIOS EN SUPABASE)</h1>
-            <p className="mt-2 text-sm text-slate-400">Ingresa tus credenciales para acceder a admin o POS.</p>
-            <p className="mt-1 text font-semibold text-white">ESTO SE ELIMINARÁ EN LA ENTREGA, PERO CREDENCIALES SON:</p>
-            <h3 className="mt-2 text-sm text-slate-100">admin: admin1@gmail.com / admin</h3>
-            <h3 className="mt-2 text-sm text-slate-100">pos: user3@gmail.com / user</h3>
+
+            <h1 className="text-3xl font-bold text-white">
+              Inicio de sesión
+            </h1>
+
+            <p className="mt-2 text-sm text-white/90">
+              Ingresa tus credenciales para acceder a admin o POS.
+            </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label htmlFor="login-email" className="mb-2 block text-sm font-medium text-slate-300">
-                Correo
-              </label>
-              <input
-                id="login-email"
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-                autoComplete="username"
-                placeholder="tu@correo.com"
-                className="w-full rounded-2xl border border-slate-800 bg-[#02060F] px-4 py-3 text-white outline-none ring-0 transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
-              />
-            </div>
-            <div>
-              <label htmlFor="login-password" className="mb-2 block text-sm font-medium text-slate-300">
-                Contraseña
-              </label>
-              <input
-                id="login-password"
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-                autoComplete="current-password"
-                placeholder="••••••••"
-                className="w-full rounded-2xl border border-slate-800 bg-[#02060F] px-4 py-3 text-white outline-none ring-0 transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
-              />
-            </div>
+          {/* Formulario */}
+          <div className="p-8">
+            <form onSubmit={handleSubmit} className="space-y-6">
 
-            {error ? (
-              <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                {error}
+              <div>
+                <label
+                  htmlFor="login-email"
+                  className="mb-2 block text-sm font-semibold text-[#0F172A]"
+                >
+                  Correo
+                </label>
+
+                <input
+                  id="login-email"
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  required
+                  autoComplete="username"
+                  placeholder="tu@correo.com"
+                  className="w-full rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3 text-[#0F172A] outline-none transition duration-200 placeholder:text-[#475569]/60 focus:border-transparent focus:shadow-[0_0_0_3px_rgba(147,51,234,0.12)]"
+                />
               </div>
-            ) : null}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
-            </button>
-          </form>
+              <div>
+                <label
+                  htmlFor="login-password"
+                  className="mb-2 block text-sm font-semibold text-[#0F172A]"
+                >
+                  Contraseña
+                </label>
+
+                <input
+                  id="login-password"
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  className="w-full rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3 text-[#0F172A] outline-none transition duration-200 placeholder:text-[#475569]/60 focus:border-transparent focus:shadow-[0_0_0_3px_rgba(147,51,234,0.12)]"
+                />
+              </div>
+
+              {error ? (
+                <div className="rounded-2xl border border-[#DC2626]/20 bg-[#DC2626]/5 p-4 text-sm text-[#DC2626]">
+                  {error}
+                </div>
+              ) : null}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-r from-[#2563EB] via-[#9333EA] to-[#DC2626] bg-[length:200%_100%] bg-[position:0%_0%] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-[rgba(147,51,234,0.08)] transition-all duration-300 hover:scale-[1.02] hover:bg-[position:100%_0%] hover:shadow-xl active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
+              </button>
+            </form>
+          </div>
         </div>
       </div>
-    </main>
+    </div>
   )
 }
