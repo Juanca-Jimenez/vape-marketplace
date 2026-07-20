@@ -60,7 +60,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // ── RATE LIMITING en la ruta de login del admin
-  if (pathname === '/admin/login' && request.method === 'POST') {
+  if ((pathname === '/admin/login' || pathname === '/login') && request.method === 'POST') {
     const allowed = checkRateLimit(ip)
     if (!allowed) {
       sendLog(

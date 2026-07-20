@@ -14,3 +14,39 @@
 2026-07-19 02:45:00 | WARN | ip=::1 | modulo=auth | accion=access_denied | Intento de acceso sin autenticación a /admin
 2026-07-19 02:45:16 | WARN | usuario=admin12@gmail.com | modulo=auth | accion=login_failed | Failed login attempt: Invalid credentials
 2026-07-19 02:45:34 | INFO | usuario=admin1@gmail.com | modulo=auth | accion=login_success | User logged in successfully
+2026-07-20 00:03:42 | WARN | usuario=intento2@gmail.com | modulo=auth | accion=login_failed | Failed login attempt: Invalid credentials
+2026-07-20 00:03:50 | WARN | usuario=intento3@gmail.com | modulo=auth | accion=login_failed | Failed login attempt: Invalid credentials
+2026-07-20 00:03:55 | WARN | usuario=intento4@gmail.com | modulo=auth | accion=login_failed | Failed login attempt: Invalid credentials
+2026-07-20 00:03:59 | WARN | usuario=intento5@gmail.com | modulo=auth | accion=login_failed | Failed login attempt: Invalid credentials
+2026-07-20 00:04:03 | WARN | usuario=intento6@gmail.com | modulo=auth | accion=login_failed | Failed login attempt: Invalid credentials
+2026-07-20 00:04:07 | WARN | usuario=intento7@gmail.com | modulo=auth | accion=login_failed | Failed login attempt: Invalid credentials
+2026-07-20 00:04:12 | WARN | usuario=intento8@gmail.com | modulo=auth | accion=login_failed | Failed login attempt: Invalid credentials
+2026-07-20 00:04:17 | WARN | usuario=intento9@gmail.com | modulo=auth | accion=login_failed | Failed login attempt: Invalid credentials
+2026-07-20 00:16:18 | WARN | usuario=admin10@gmail.com | modulo=auth | accion=login_failed | Failed login attempt: Invalid credentials
+2026-07-20 00:16:22 | WARN | usuario=admin11@gmail.com | modulo=auth | accion=login_failed | Failed login attempt: Invalid credentials
+2026-07-20 00:16:25 | WARN | usuario=admin12@gmail.com | modulo=auth | accion=login_failed | Failed login attempt: Invalid credentials
+2026-07-20 00:16:29 | WARN | usuario=admin13@gmail.com | modulo=auth | accion=login_failed | Failed login attempt: Invalid credentials
+2026-07-20 00:16:32 | WARN | usuario=admin14@gmail.com | modulo=auth | accion=login_failed | Failed login attempt: Invalid credentials
+2026-07-20 00:16:37 | WARN | ip=::1 | modulo=auth | accion=rate_limit_blocked | IP ::1 bloqueada por exceso de intentos de login
+2026-07-20 00:16:46 | WARN | ip=::1 | modulo=auth | accion=rate_limit_blocked | IP ::1 bloqueada por exceso de intentos de login
+2026-07-20 00:16:50 | WARN | ip=::1 | modulo=auth | accion=rate_limit_blocked | IP ::1 bloqueada por exceso de intentos de login
+2026-07-20 00:29:09 | WARN | usuario=admin10@gmail.com | modulo=auth | accion=login_failed | Failed login attempt: Invalid credentials
+2026-07-20 00:29:12 | WARN | usuario=admin11@gmail.com | modulo=auth | accion=login_failed | Failed login attempt: Invalid credentials
+2026-07-20 00:29:16 | WARN | ip=::1 | modulo=auth | accion=rate_limit_blocked | IP ::1 bloqueada por exceso de intentos de login
+2026-07-20 00:29:19 | WARN | ip=::1 | modulo=auth | accion=rate_limit_blocked | IP ::1 bloqueada por exceso de intentos de login
+2026-07-20 00:29:25 | WARN | ip=::1 | modulo=auth | accion=rate_limit_blocked | IP ::1 bloqueada por exceso de intentos de login
+2026-07-20 00:29:29 | WARN | ip=::1 | modulo=auth | accion=rate_limit_blocked | IP ::1 bloqueada por exceso de intentos de login
+2026-07-20 00:29:33 | WARN | ip=::1 | modulo=auth | accion=rate_limit_blocked | IP ::1 bloqueada por exceso de intentos de login
+2026-07-20 00:29:36 | WARN | ip=::1 | modulo=auth | accion=rate_limit_blocked | IP ::1 bloqueada por exceso de intentos de login
+2026-07-20 00:29:41 | WARN | ip=::1 | modulo=auth | accion=rate_limit_blocked | IP ::1 bloqueada por exceso de intentos de login
+2026-07-20 00:29:47 | WARN | ip=::1 | modulo=auth | accion=rate_limit_blocked | IP ::1 bloqueada por exceso de intentos de login
+2026-07-20 00:29:49 | WARN | ip=::1 | modulo=auth | accion=rate_limit_blocked | IP ::1 bloqueada por exceso de intentos de login
+2026-07-20 17:51:28 | INFO | usuario=admin1@gmail.com | modulo=auth | accion=login_success | User logged in successfully
+2026-07-20 17:54:12 | INFO | usuario=admin1@gmail.com | modulo=auth | accion=login_success | User logged in successfully
+2026-07-20 17:56:04 | INFO | usuario=user3@gmail.com | modulo=auth | accion=login_success | User logged in successfully
+2026-07-20 18:03:10 | WARN | ip=::1 | modulo=auth | accion=rate_limit_blocked | IP ::1 bloqueada por exceso de intentos de login
+2026-07-20 18:04:30 | WARN | ip=::1 | modulo=auth | accion=rate_limit_blocked | IP ::1 bloqueada por exceso de intentos de login
+2026-07-20 18:04:39 | WARN | ip=::1 | modulo=auth | accion=rate_limit_blocked | IP ::1 bloqueada por exceso de intentos de login
+2026-07-20 18:19:42 | WARN | ip=::1 | modulo=auth | accion=access_denied | Intento de acceso sin autenticación a /admin
+2026-07-20 18:19:49 | WARN | ip=::1 | modulo=auth | accion=access_denied | Intento de acceso sin autenticación a /pos
+2026-07-20 18:29:30 | INFO | usuario=admin1@gmail.com | modulo=auth | accion=login_success | User logged in successfully
